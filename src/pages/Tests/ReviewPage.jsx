@@ -14,17 +14,54 @@ const ReviewPage = () => {
   const [activeSection, setActiveSection] = useState(null);
   const printRef = useRef(null);
 
-  const updateTheMode = async () => {
+  const handleSubmit = async () => {
     try {
-      const response = await testServices.updateTestMode(id, examMode);
-      if (response.success) {
-        toast.success("Test created completed ");
-        navigate("/TCreation");
-      } else {
-        console.error("Failed to fetch test details.");
+      const allSections = Object.keys(sectionQuestions);
+
+      for (const sectionId of allSections) {
+        const pickedTopics = sectionQuestions[sectionId].pickedTopics;
+
+        const questionIds = [];
+
+        Object.keys(pickedTopics).forEach((topicName) => {
+          pickedTopics[topicName].forEach((question) => {
+            if (question._id) {
+              questionIds.push(question._id);
+            }
+          });
+        });
+
+        if (questionIds.length === 0) {
+          console.warn(`No questions found for section ${sectionId}`);
+          continue;
+        }
+
+        const payload = {
+          questionBankQuestionId: questionIds,
+        };
+
+        const response = await testServices.addQuestionsToSection(
+          id,
+          sectionId,
+          payload
+        );
+
+        if (response.success) {
+          console.log(`Saved questions for section ${sectionId}`);
+        } else {
+          console.error(
+            `Failed to save section ${sectionId}:`,
+            response.message
+          );
+          toast.error(`Failed to save section ${sectionId}`);
+        }
       }
+
+      toast.success("All questions saved to DB successfully!");
+      navigate("/TCreation");
     } catch (error) {
-      console.error("API Error:", error);
+      console.error("Error submitting questions:", error);
+      toast.error("Something went wrong while submitting the questions.");
     }
   };
 
@@ -33,10 +70,11 @@ const ReviewPage = () => {
 
     if (storedQuestions) {
       const parsedQuestions = JSON.parse(storedQuestions);
+      console.log("Parsed Questions", parsedQuestions); // Log the questions to see their structure
       setSectionQuestions(parsedQuestions);
 
       if (Object.keys(parsedQuestions).length > 0) {
-        setActiveSection(Object.keys(parsedQuestions)[0]);
+        setActiveSection(Object.keys(parsedQuestions)[0]); // Optionally set the first section as active
       }
     }
   }, []);
@@ -269,48 +307,30 @@ const ReviewPage = () => {
             ))}
           </div>
         </div>
-
         <div ref={printRef} className="mt-4">
           {activeSection && sectionQuestions[activeSection] ? (
-            Object.keys(sectionQuestions[activeSection]).map((topicName) =>
-              Object.values(sectionQuestions[activeSection][topicName]).map(
-                (question) => (
-                  <div
-                    key={question._id}
-                    className="mt-2 p-2 border rounded-md bg-white"
-                  >
-                    <MathJax>
-                      {question.English?.replace(/\\\\/g, " \\[ \n \\] ") // Ensures line breaks
-                        .replace(/\\includegraphics\[.*?\]{.*?}/g, "")
-                        .trim()}
-                    </MathJax>
-                    <ul className="mt-2 space-y-1">
-                      {question.OptionsEnglish.split("\\\\")
-                        .filter((option) => option.trim() !== "")
-                        .map((option, index) => {
-                          const correctAnswers =
-                            question.Answer.split("&").map(Number);
-                          const isCorrect = correctAnswers.includes(index + 1);
+            Object.keys(sectionQuestions[activeSection].pickedTopics).map(
+              (topicName) =>
+                sectionQuestions[activeSection].pickedTopics[topicName].map(
+                  (question, index) => (
+                    <div
+                      key={question._id}
+                      className="mt-2 p-2 border rounded-md bg-white"
+                    >
+                      <p className="font-medium text-gray-800 mb-1">
+                        {index + 1}. {question.English}
+                      </p>
 
-                          return (
-                            <li
-                              key={index}
-                              className={`flex items-center text-xs px-2 py-1 rounded-md ${
-                                isCorrect
-                                  ? "text-green-600 font-bold "
-                                  : "text-gray-700"
-                              }`}
-                            >
-                              <MathJax
-                                inline
-                              >{`\\(${option.trim()}\\)`}</MathJax>
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  </div>
+                      {question.OptionsEnglish?.split("\\\\").map(
+                        (opt, idx) => (
+                          <p key={idx} className="text-sm text-gray-600 ml-4">
+                            {`${opt.trim()}`}
+                          </p>
+                        )
+                      )}
+                    </div>
+                  )
                 )
-              )
             )
           ) : (
             <p className="text-gray-600 mt-4">
@@ -347,7 +367,7 @@ const ReviewPage = () => {
 
           <button
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition w-full md:w-auto"
-            onClick={updateTheMode}
+            onClick={handleSubmit}
           >
             Submit
           </button>

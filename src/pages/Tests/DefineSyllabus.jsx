@@ -219,15 +219,15 @@ const DefineSyllabus = () => {
             return;
           }
         
-          // ✅ Save auto-picked questions to sessionStorage
+          
           const autoPicked = autoPickResponse.data;
         
-          // Load previous pickedQuestions from sessionStorage
+    
           const existing = JSON.parse(sessionStorage.getItem("AutoPickedQuestions") || "{}");
         
           const updated = { ...existing };
         
-          // Merge new auto-picked questions
+       
           if (!updated[sectionId]) updated[sectionId] = {};
         
           Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
@@ -325,7 +325,10 @@ const DefineSyllabus = () => {
       {/* Submit Button */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-6">
         <button
-          onClick={() => setQuestionSelectionType("Manual")}
+          onClick={() => {
+            setQuestionSelectionType("Manual"),
+            setTimeout(() => handleSubmit(), 0);}
+          }
           className={`flex items-center gap-2 ${
             questionSelectionType === "Manual"
               ? "bg-indigo-700"
@@ -336,7 +339,10 @@ const DefineSyllabus = () => {
         </button>
 
         <button
-          onClick={() => setQuestionSelectionType("Auto")}
+         onClick={() => {
+          setQuestionSelectionType("Auto"),
+          setTimeout(() => handleSubmit(), 0);}
+        }
           className={`flex items-center gap-2 ${
             questionSelectionType === "Auto"
               ? "bg-indigo-600"
@@ -346,13 +352,13 @@ const DefineSyllabus = () => {
           Auto Pick Questions
         </button>
 
-        <button
-          onClick={handleSubmit}
+        {/* <button
+          
           className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md hover:bg-green-700 transition-all disabled:opacity-50"
           disabled={!isAllSectionsComplete || !questionSelectionType}
         >
           Save and Next
-        </button>
+        </button> */}
       </div>
     </div>
   );

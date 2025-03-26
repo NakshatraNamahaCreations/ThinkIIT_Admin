@@ -64,11 +64,23 @@ const testServices = {
       return { success: false, message: "Failed to fetch test details" };
     }
   },
-  addQuestionsToSection: async (testId, questionData) => {
+  // addQuestionsToSection: async (testId, questionData) => {
+  //   try {
+  //     const response = await axios.post(
+  //       `${config.BASE_URL_TEST}newTest/${testId}/add-sectionsdata`,
+  //       questionData
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error adding questions:", error);
+  //     return { success: false, message: "Failed to add questions" };
+  //   }
+  // },
+  addQuestionsToSection: async (testId, sectionId, questionBankId) => {
     try {
-      const response = await axios.post(
-        `${config.BASE_URL_TEST}newTest/${testId}/add-sectionsdata`,
-        questionData
+      const response = await axios.put(
+        `${config.BASE_URL_TEST}newTest/${testId}/section/${sectionId}/questions`,
+        questionBankId
       );
       return response.data;
     } catch (error) {
@@ -76,6 +88,7 @@ const testServices = {
       return { success: false, message: "Failed to add questions" };
     }
   },
+  
   GetAllQuestions: async () => {
     try {
       const response = await axios.get(
@@ -209,6 +222,34 @@ GetAutoPickedQuestions: async (testId) => {
       return { success: false, message: "Failed to create assignment" };
     }
   },
+
+  // Get Question By Q Id 
+  
+  GetQuestionsByTestId: async (id, testId, sectionId) => {
+    try {
+      const response = await axios.get(
+        `${config.BASE_URL_TEST}newTest/getQuestions/${testId}/${sectionId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating sections:", error);
+      return { success: false, message: "Failed to create assignment" };
+    }
+  },
+
+  GetQuestionByQid: async (id, mode) => {
+    try {
+      const response = await axios.post(
+        `${config.BASE_URL_QUESTIONS}QB/getByIds`,
+        mode
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating sections:", error);
+      return { success: false, message: "Failed to create assignment" };
+    }
+  },
+
 };
 
 export default testServices;

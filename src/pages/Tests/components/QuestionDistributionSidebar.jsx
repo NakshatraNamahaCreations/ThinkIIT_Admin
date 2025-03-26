@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import testServices from "../../../services/testService";
 
@@ -57,6 +57,8 @@ const QuestionDistributionSidebar = ({
           <div key={section._id} className="mb-4">
             <p className="text-md font-semibold text-gray-700">
               {section.subject}
+              {console.log(section)
+              }
             </p>
 
             {section.chapter.length > 0 ? (
@@ -100,6 +102,8 @@ const QuestionDistributionSidebar = ({
                               {topicName.slice(0,15)}
                             </span>
                             <span>
+                              {console.log("the final topic",topic)
+                              }
                               {pickedCount} / {topic.numberOfQuestions}
                             </span>
                           </div>
@@ -124,7 +128,7 @@ const QuestionDistributionSidebar = ({
           className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
           onClick={handleSubmit}
         >
-          Approve
+          Review
         </button>
       </div>
     </div>

@@ -1,10 +1,59 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import NewAssignmentModal from "./components/FormModal";
 import testServices from "../../services/testService";
 import { MdDelete } from "react-icons/md";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import { Switch, TextField } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
+import axios from "axios";
+import ViewModal from "./components/ViewModal";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 const TCreation = () => {
+  const [open, setOpen] = useState(false);
+  const [openView, setOpenView] = useState(false);
+  const [selectedTest, setSelectedTest] = useState(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTestView, setSelectedTestView] = useState(null);
+  const handleOpen = (testId) => {
+    setSelectedTest(testId);
+    setOpen(true);
+  };
+  
+  const handleClose = () => {
+    setSelectedTest(null);
+    setOpen(false);
+  };
+
+
+  const handleOpenView = (testId) => {
+    setSelectedTestView(testId);
+    setOpenView(true);
+  };
+  
+  const handleCloseView = () => {
+    setSelectedTestView(null);
+    setOpenView(false);
+  };
+
   const [assignments, setAssignments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -26,13 +75,13 @@ const TCreation = () => {
     if (!window.confirm("Are you sure you want to delete this test?")) return;
 
     try {
-      const response = await testServices.deleteTestById(id);
-      if (response.success) {
+      // const response = await testServices.deleteTestById(id);
+      // if (response.success) {
         toast.success("Test deleted successfully!");
-        fetchTests();
-      } else {
-        toast.error(response.message || "Failed to delete test.");
-      }
+        // fetchTests();
+      // } else {
+      //   toast.error(response.message || "Failed to delete test.");
+      // }
     } catch (error) {
       toast.error("Error deleting test.");
       console.error("Delete error:", error);
@@ -42,6 +91,43 @@ const TCreation = () => {
   const filteredAssignments = assignments?.filter((assignment) =>
     assignment?.testName?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [testStatus, setTestStatus] = useState(
+    filteredAssignments.reduce((acc, assignment) => {
+      acc[assignment._id] = false; // Default to 'Offline'
+      return acc;
+    }, {})
+  );
+
+  console.log(testStatus,"testStatus")
+
+  // Handle checkbox status change
+  const handleStatusToggle = (testId) => {
+    setTestStatus((prevStatus) => ({
+      ...prevStatus,
+      [testId]: !prevStatus[testId],
+    }));
+    setSelectedTest(testId);
+    setOpen(true); // Open modal for both status change
+  };
+
+  const updateTestMode = async (testId, testMode) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8005/api/newTest/${testId}/updateTestMode`, 
+        { testMode:testMode, }
+      );
+      if (response.data.success) {
+        toast.success("Test mode updated successfully!");
+      } else {
+        toast.error("Failed to update test mode.");
+      }
+    } catch (error) {
+      console.error("Error updating test mode:", error);
+      toast.error("Error updating test mode.");
+    }
+  };
+  
 
   return (
     <div className="mx-auto p-4 sm:p-6">
@@ -100,9 +186,41 @@ const TCreation = () => {
                       assignment.sections?.length ||
                       0}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">-</td>
+                  <td className="px-4 py-3 text-gray-600"></td>
                   <td className="px-4 py-3 flex items-center gap-4 text-indigo-600 font-medium">
-                    <button className="hover:underline">View</button>
+                    <button className="hover:underline" onClick={()=>handleOpenView(assignment._id)}>View</button>
+
+                    {/* Replace the Switch with Checkbox */}
+                    <FormGroup row>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={testStatus[assignment._id] === "online"} // If status is "online"
+                            onChange={() =>
+                              handleStatusToggle(assignment._id, "online")
+                            }
+                            name="statusOnline"
+                            color="primary"
+                          />
+                        }
+                        label="Online"
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={testStatus[assignment._id] === "offline"} // If status is "offline"
+                            onChange={() =>
+                              handleStatusToggle(assignment._id, "offline")
+                            }
+                            name="statusOffline"
+                            color="primary"
+                          />
+                        }
+                        label="Offline"
+                      />
+                    </FormGroup>
+
                     <button
                       onClick={() => handleDeleteTest(assignment._id)}
                       className="text-red-500 hover:text-red-700"
@@ -123,8 +241,65 @@ const TCreation = () => {
           </tbody>
         </table>
       </div>
-
+      <ViewModal open={openView} onClose={handleCloseView} testId={selectedTestView} />
       {/* Modal */}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            {testStatus[selectedTest] ? "Test Duration" : "Offline Options"}
+          </Typography>
+
+          {/* Conditionally render content based on status */}
+          {testStatus[selectedTest] ? (
+            // If the status is Online, show Test Duration field
+            <>
+              <TextField
+                label="Duration"
+                type="text"
+                fullWidth
+                sx={{ mt: 2 }}
+              />
+              <Button
+                onClick={handleClose}
+                variant="contained"
+                color="primary"
+                sx={{ mt: 3 }}
+              >
+                Save
+              </Button>
+            </>
+          ) : (
+            // If the status is Offline, show Download and Print buttons
+            <>
+              <Button
+                onClick={() => {
+                  /* Implement download functionality */
+                }}
+                variant="outlined"
+                color="primary"
+                sx={{ mt: 2, mr: 2 }}
+              >
+                Download
+              </Button>
+              <Button
+                onClick={() => {
+                  /* Implement print functionality */
+                }}
+                variant="outlined"
+                color="primary"
+                sx={{ mt: 2 }}
+              >
+                Print
+              </Button>
+            </>
+          )}
+        </Box>  
+      </Modal>
       <NewAssignmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -134,3 +309,4 @@ const TCreation = () => {
 };
 
 export default TCreation;
+

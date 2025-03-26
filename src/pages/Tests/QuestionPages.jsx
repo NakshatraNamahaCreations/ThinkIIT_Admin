@@ -44,7 +44,7 @@ const QuestionPages = () => {
     Difficulty: "",
   });
   const [selectedTopic, setSelectedTopic] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [sectionWiseQuestions, setSectionWiseQuestions] = useState({});
   const navigate = useNavigate();
 
   const fetchTestDataById = async (id) => {
@@ -84,6 +84,10 @@ const QuestionPages = () => {
         const response = await testServices.GetFilteredQuestions(payload);
 
         setFilteredQuestions(response);
+        setSectionWiseQuestions((prev) => ({
+          ...prev,
+          [selectedSection._id]: response,
+        }));
       } catch (err) {
         console.error("Fetch Error:", err.message);
       }
@@ -125,39 +129,49 @@ const QuestionPages = () => {
       console.warn("Missing sectionId or topicName");
       return;
     }
-
+  
     const sectionId = selectedSection._id;
     const trimmedTopicName = topicName.trim();
-
+    const sectionMaxQuestions = selectedSection.numberOfQuestions;
+  
     setPickedQuestions((prev) => {
       const prevSection = prev[sectionId] || {};
       const prevTopic = prevSection[trimmedTopicName] || {};
-
       const isAlreadyPicked = !!prevTopic[questionId];
-
-      // Toggle selection
+  
       const updatedTopic = {
         ...prevTopic,
         ...(isAlreadyPicked ? {} : { [questionId]: true }),
       };
-
+  
       if (isAlreadyPicked) delete updatedTopic[questionId];
-
+  
       const updatedSection = {
         ...prevSection,
         [trimmedTopicName]: updatedTopic,
       };
-
+  
       const updated = {
         ...prev,
         [sectionId]: updatedSection,
       };
-
+  
+      const selectedQuestionCount = Object.keys(updatedSection[trimmedTopicName]).length;
+  
+      if (selectedQuestionCount > sectionMaxQuestions) {
+        // toast.error(`You can only pick ${sectionMaxQuestions} questions for this section.`);
+        return prev; // Prevent further changes if max questions exceeded
+      }
+  
+      // Save the updated picked questions to sessionStorage and localStorage
+      sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
       localStorage.setItem("pickedQuestions", JSON.stringify(updated));
-
+  
       return updated;
     });
   };
+  
+  
 
   const toggleSolution = (questionId) => {
     setShowSolution((prev) => ({
@@ -191,63 +205,91 @@ const QuestionPages = () => {
   // }, [testDetails, selectedSection]);
   
   useEffect(() => {
+    // Fetch auto-picked questions from sessionStorage when the section changes
     const saved = sessionStorage.getItem("AutoPickedQuestions");
+    
     if (saved && selectedSection) {
       try {
         const autoPicked = JSON.parse(saved);
-  
         const sectionId = selectedSection._id;
-        const transformed = {
-          [sectionId]: autoPicked
-        };
   
-        setPickedQuestions(transformed);
-        sessionStorage.setItem("pickedQuestions", JSON.stringify(transformed)); // Optional
+        // Retrieve the selected questions for the section
+        const newSectionData = autoPicked[sectionId]
+          ? { [sectionId]: autoPicked[sectionId] }
+          : {};
+  
+        // Update pickedQuestions with auto-picked data from sessionStorage
+        setPickedQuestions((prev) => {
+          const merged = { ...prev, ...newSectionData };
+  
+          sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
+          localStorage.setItem("pickedQuestions", JSON.stringify(merged));
+  
+          return merged;
+        });
       } catch (error) {
         console.error("Error parsing AutoPickedQuestions:", error);
-        // setPickedQuestions({});
       }
     }
   }, [selectedSection]);
   
   
   
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     try {
       const formattedTestId = id?.testId || id;
-
-      const selectedQuestions = {};
-
+      const selectedDetails = {};
+  
       Object.keys(pickedQuestions).forEach((sectionId) => {
-        selectedQuestions[sectionId] = {};
-
-        Object.keys(pickedQuestions[sectionId]).forEach((topicName) => {
-          selectedQuestions[sectionId][topicName] = {};
-
-          Object.keys(pickedQuestions[sectionId][topicName]).forEach(
-            (questionId) => {
-              const questionDetail = filteredQuestions.find(
-                (q) => q._id === questionId
-              );
-              if (questionDetail) {
-                selectedQuestions[sectionId][topicName][questionId] =
-                  questionDetail;
-              }
-            }
-          );
+        const topicMap = pickedQuestions[sectionId];
+        const section = testDetails.sections.find((sec) => sec._id === sectionId);
+        if (!section) return;
+  
+        selectedDetails[sectionId] = {
+          sectionDetails: {
+            subject: section.subject,
+            chapter: section.chapter,
+            topic: section.topic,
+            questionType: section.questionType,
+            numberOfQuestions: section.numberOfQuestions,
+          },
+          pickedTopics: {},
+        };
+  
+        Object.keys(topicMap).forEach((topicName) => {
+          const questionIdsMap = topicMap[topicName];
+          const questionIds = Object.keys(questionIdsMap);
+  
+          // Get full questions from filteredQuestions (or all available questions if needed)
+          const fullQuestions = (sectionWiseQuestions[sectionId] || []).filter((q) =>
+            questionIds.includes(q._id)
+          ).map((q) => ({
+            _id: q._id,
+            English: q.English,
+            OptionsEnglish: q.OptionsEnglish,
+            Answer: q.Answer,
+            Topic: q.Topic,
+            Chapter: q.Chapter,
+            Difficulty: q.Difficulty,
+            Images: q.Images || null,
+            SolutionSteps: q.SolutionSteps || null
+          }));
+  
+          selectedDetails[sectionId].pickedTopics[topicName] = fullQuestions;
         });
       });
-
-      sessionStorage.setItem(
-        "questionDetails",
-        JSON.stringify(selectedQuestions)
-      );
-
+  
+      sessionStorage.setItem("questionDetails", JSON.stringify(selectedDetails));
+      console.log("Full question details saved:", selectedDetails);
+  
       navigate(`/questionReview/${formattedTestId}`);
     } catch (error) {
       console.error("Submission Error:", error);
     }
   };
+  
+  
+  
 
   const handleTopicSelect = (section, topic) => {
     setSelectedSection(section);
@@ -267,7 +309,7 @@ const QuestionPages = () => {
           ? { [sectionId]: autoPicked[sectionId] }
           : autoPicked;
   
-        console.log("🛠 Setting pickedQuestions as:", transformed);
+        console.log("Setting pickedQuestions as:", transformed);
         setPickedQuestions(transformed);
   
         // Optional: update session/local storage
@@ -314,7 +356,29 @@ const QuestionPages = () => {
         {/* Main Content Area: Question Selection */}
         <div className="w-3/4 bg-white rounded-lg shadow-md">
           {/* Section Navigation */}
-
+          <div className="flex space-x-3 bg-white p-3 rounded-lg shadow-md">
+            {testDetails?.sections?.length > 0 && (
+              <div className="flex space-x-3 bg-white p-3 rounded-lg shadow-md">
+                {testDetails.sections.map((section, index) => (
+                  <button
+                    key={section._id}
+                    className={`px-5 py-2 text-lg font-semibold rounded-md transition-all ${
+                      selectedSection?._id === section._id
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-200"
+                    }`}
+                    onClick={() => {
+                      setSelectedSection(section);
+                      setSelectedTopic(null); 
+                    }}
+                    
+                  >
+                    Section {index + 1} ({section.numberOfQuestions} Qs)
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="bg-white p-4 rounded-lg shadow-md mt-4">
             <p className="text-lg font-semibold text-gray-700 mb-3">
               Filter Questions
@@ -334,20 +398,20 @@ const QuestionPages = () => {
                 onChange={handleFilterChange}
                 options={[...new Set(questions.map((q) => q.Subject))]}
               /> */}
-              <FilterDropdown
+              {/* <FilterDropdown
                 name="Chapter"
                 label="Chapter"
                 value={filters.Chapter}
                 onChange={handleFilterChange}
                 options={[...new Set(filteredQuestions?.map((q) => q.Chapter))]}
-              />
-              <FilterDropdown
+              /> */}
+              {/* <FilterDropdown
                 name="Topic"
                 label="Topic"
                 value={filteredQuestions.Topic}
                 onChange={handleFilterChange}
                 options={[...new Set(questions?.map((q) => q.Topic))]}
-              />
+              /> */}
               <FilterDropdown
                 name="Difficulty"
                 label="Difficulty"
@@ -360,14 +424,12 @@ const QuestionPages = () => {
           {/* Question List */}
           <div className="mt-5">
             {filteredQuestions?.length > 0 ? (
-              filteredQuestions
-                ?.filter((question) => {
-                  if (!selectedTopic) return true; 
-                  return pickedQuestions[selectedSection?._id]?.[
-                    selectedTopic.topicName
-                  ]?.[question._id];
-                })
-                ?.map((question) => {
+                   filteredQuestions.filter((question) => {
+                    if (!selectedTopic) return true;
+                    return pickedQuestions[selectedSection?._id]?.[selectedTopic.topicName]?.[question._id];
+                   
+            })?.map((question) => {
+        
                   const imageMatch = question.English?.match(
                     /\\includegraphics\[.*?\]{(.*?)}/
                   );

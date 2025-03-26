@@ -14,9 +14,9 @@ const QuestionForms = () => {
     subjectId: "",
     questionType: "",
     minQuestionsAnswerable: "",
-    marks: "",
-    negativeMarking: "",
-    numQuestions: "",
+    marksPerQuestion: "",
+    negativeMarksPerWrongAnswer: "",
+    numberOfQuestions: "",
   });
 
   const [editIndex, setEditIndex] = useState(null);
@@ -92,7 +92,7 @@ const QuestionForms = () => {
       setFormData((prev) => ({
         ...prev,
         subject: value,
-        subjectId: selectedSubject ? selectedSubject._id : "", // Ensure ID is stored
+        subjectId: selectedSubject ? selectedSubject._id : "", 
       }));
     } else {
       setFormData((prev) => ({
@@ -104,7 +104,7 @@ const QuestionForms = () => {
 
   const handleSubmit = () => {
     if (savedSections?.length > 0) {
-      // Check if savedSections exists and has at least one section
+   
       navigate(`/define-syllabus/${id}`);
     } else {
       toast.error("Please create at least one section before proceeding.");
@@ -112,70 +112,83 @@ const QuestionForms = () => {
   };
 
   const handleSaveSection = async () => {
+  
     if (
-      !formData.marks ||
-      !formData.numQuestions ||
+      !formData.marksPerQuestion ||
+      !formData.numberOfQuestions ||
       !formData.subject ||
-      !formData.negativeMarking
+      !formData.negativeMarksPerWrongAnswer
     ) {
       toast.error("Please fill all required fields.");
       return;
     }
-
+  
+   
+    const negativeMarking = parseFloat(formData.negativeMarksPerWrongAnswer);
+    const marks = parseInt(formData.marksPerQuestion, 10);
+  
+  
+    if (negativeMarking > 0) {
+      toast.error("Negative marking cannot be a positive number.");
+      return;
+    }
+  
+    if (negativeMarking < 0 && Math.abs(negativeMarking) > marks) {
+      toast.error("Negative marking cannot be greater than the marks per question.");
+      return;
+    }
+  
     const payload = {
       subject: formData.subject,
       subjectId: formData.subjectId,
       questionType: formData.questionType,
-      numberOfQuestions: parseInt(formData.numQuestions, 10),
-      marksPerQuestion: parseInt(formData.marks, 10),
+      numberOfQuestions: parseInt(formData.numberOfQuestions, 10),
+      marksPerQuestion: marks,
       minQuestionsAnswerable: parseInt(formData.minQuestionsAnswerable, 10),
-      negativeMarksPerWrongAnswer: parseFloat(formData.negativeMarking),
+      negativeMarksPerWrongAnswer: negativeMarking,
     };
-
-    let updatedSections = Array.isArray(savedSections)
-      ? [...savedSections]
-      : [];
-
+  
+    let updatedSections = Array.isArray(savedSections) ? [...savedSections] : [];
+  
     try {
       if (editIndex !== null) {
-        // Editing an existing section
+ 
         const sectionId = savedSections[editIndex]._id;
-
         await testServices.editSection(id, sectionId, payload);
-
+  
         updatedSections[editIndex] = { ...formData, _id: sectionId };
         setSavedSections(updatedSections);
         setEditIndex(null);
         toast.success("Section updated successfully!");
       } else {
-        // Adding a new section
+  
         const newSection = await testServices.addSectionDetail(id, payload);
         updatedSections.push({ ...formData, _id: newSection._id });
         toast.success("Section saved successfully!");
       }
-
-      // Update state
+  
+ 
       setSavedSections(updatedSections);
-
-      // Store updated sections in **sessionStorage**
       sessionStorage.setItem("savedSections", JSON.stringify(updatedSections));
-
-      // Reset form
+  
+      console.log("the updated",updatedSections);
+      
       setFormData({
         sectionName: "",
         subject: "",
         questionType: "",
-        marks: "",
-        negativeMarking: "",
+        marksPerQuestion: "",
+        negativeMarksPerWrongAnswer: "",
         minQuestionsAnswerable: "",
-        numQuestions: "",
+        numberOfQuestions: "",
       });
     } catch (error) {
       toast.error("Error saving section.");
       console.error("Save Error:", error);
     }
   };
-
+  
+  
   const handleEditSection = (index) => {
     const selectedSection = savedSections[index];
 
@@ -183,21 +196,19 @@ const QuestionForms = () => {
       console.error("Section not found at index:", index);
       return;
     }
+console.log(selectedSection);
 
     setFormData({
-      sectionName: selectedSection.sectionName || "",
-      subject: selectedSection.subject || "",
-      questionType: selectedSection.questionType || "MCQ",
-      numQuestions: selectedSection.numberOfQuestions
-        ? selectedSection.numberOfQuestions.toString()
-        : "",
-      marks: selectedSection.marksPerQuestion
-        ? selectedSection.marksPerQuestion.toString()
-        : "",
-      negativeMarking: selectedSection.negativeMarksPerWrongAnswer
-        ? selectedSection.negativeMarksPerWrongAnswer.toString()
-        : "",
+      sectionName: selectedSection?.sectionName || "",
+      subject: selectedSection?.subject || "",
+      questionType: selectedSection?.questionType || "MCQ",
+      numberOfQuestions:  selectedSection?.numberOfQuestions,
+      marksPerQuestion: selectedSection?.marksPerQuestion,
+
+      negativeMarksPerWrongAnswer:  selectedSection?.negativeMarksPerWrongAnswer ,
+      minQuestionsAnswerable: selectedSection?.minQuestionsAnswerable,
       selectionType: "Auto",
+    
     });
 
     setEditIndex(index);
@@ -263,8 +274,8 @@ const QuestionForms = () => {
               </label>
               <input
                 type="number"
-                name="marks"
-                value={formData.marks}
+                name="marksPerQuestion"
+                value={formData.marksPerQuestion}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
               />
@@ -290,8 +301,8 @@ const QuestionForms = () => {
               </label>
               <input
                 type="number"
-                name="negativeMarking"
-                value={formData.negativeMarking}
+                name="negativeMarksPerWrongAnswer"
+                value={formData.negativeMarksPerWrongAnswer}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
               />
@@ -304,8 +315,8 @@ const QuestionForms = () => {
               </label>
               <input
                 type="number"
-                name="numQuestions"
-                value={formData.numQuestions}
+                name="numberOfQuestions"
+                value={formData.numberOfQuestions}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
               />

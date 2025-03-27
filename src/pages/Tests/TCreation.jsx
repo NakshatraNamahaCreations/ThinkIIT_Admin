@@ -15,6 +15,7 @@ import Modal from "@mui/material/Modal";
 import axios from "axios";
 import ViewModal from "./components/ViewModal";
 import { formatDate } from "../../utils/helper";
+import { useNavigate } from "react-router-dom";
 
 const style = {
   position: "absolute",
@@ -34,6 +35,8 @@ const TCreation = () => {
   const [selectedTest, setSelectedTest] = useState(null);
   // const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTestView, setSelectedTestView] = useState(null);
+  const navigate = useNavigate();
+
   const handleOpen = (testId) => {
     setSelectedTest(testId);
     setOpen(true);
@@ -200,6 +203,7 @@ const TCreation = () => {
                   <td className="px-4 py-3 text-gray-600"></td>
                   <td className="px-4 py-3 flex items-center gap-4 text-indigo-600 font-medium">
                     <button className="hover:underline" onClick={()=>handleOpenView(assignment._id)}>View</button>
+                    <button className="hover:underline" onClick={()=>navigate(`/questionForm/${assignment._id}`)}>Edit</button>
 
                     {/* Replace the Switch with Checkbox */}
                     {/* <FormGroup row>

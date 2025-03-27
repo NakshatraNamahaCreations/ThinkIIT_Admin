@@ -9,7 +9,6 @@ import axios from "axios";
 const FilterDropdown = ({ name, label, value, onChange, options }) => {
   return (
     <div className="min-w-[20px]">
-      {/* <label className="block text-gray-700 font-medium mb-1">{label}</label> */}
       <select
         name={name}
         value={value}
@@ -17,11 +16,12 @@ const FilterDropdown = ({ name, label, value, onChange, options }) => {
         className="w-full border border-gray-300 bg-white px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
       >
         <option value="">All {label}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+        {options &&
+          options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
       </select>
     </div>
   );
@@ -30,6 +30,7 @@ const FilterDropdown = ({ name, label, value, onChange, options }) => {
 const QuestionPages = () => {
   const { id } = useParams();
   const [questions, setQuestions] = useState([]);
+  const [allQuestions, setAllQuestions] = useState([]); 
   const [pickedQuestions, setPickedQuestions] = useState({});
   const [testDetails, setTestDetails] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
@@ -66,6 +67,7 @@ const QuestionPages = () => {
   useEffect(() => {
     fetchTestDataById(id);
   }, [id]);
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -82,11 +84,20 @@ const QuestionPages = () => {
         };
 
         const response = await testServices.GetFilteredQuestions(payload);
-
         setFilteredQuestions(response);
+        setAllQuestions(response); 
         setSectionWiseQuestions((prev) => ({
           ...prev,
           [selectedSection._id]: response,
+        }));
+
+
+        const difficultyOptions = [
+          ...new Set(response.map((q) => q.Difficulty)),
+        ];
+        setFilters((prevFilters) => ({
+          ...prevFilters,
+          Difficulty: difficultyOptions.length ? difficultyOptions : [], 
         }));
       } catch (err) {
         console.error("Fetch Error:", err.message);
@@ -118,12 +129,33 @@ const QuestionPages = () => {
   }, [id]);
 
   const handleFilterChange = (e) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [e.target.name]: e.target.value,
-    }));
-  };
+    const { name, value } = e.target;
+  
+    setFilters((prevFilters) => {
+      const newFilters = {
+        ...prevFilters,
+        [name]: value,
+      };
 
+  
+
+      let updatedQuestions = allQuestions;
+  
+
+      if (newFilters.Difficulty) {
+        updatedQuestions = updatedQuestions.filter(
+          (question) => question.Difficulty === newFilters.Difficulty.trim()
+        );
+      }
+  
+  
+  
+    
+      setFilteredQuestions(updatedQuestions);
+      return newFilters;
+    });
+  };
+  
   const togglePickQuestion = (questionId, topicName) => {
     if (!selectedSection || !topicName) {
       console.warn("Missing sectionId or topicName");
@@ -161,11 +193,11 @@ const QuestionPages = () => {
       ).length;
 
       if (selectedQuestionCount > sectionMaxQuestions) {
-        // toast.error(`You can only pick ${sectionMaxQuestions} questions for this section.`);
-        return prev; // Prevent further changes if max questions exceeded
+  
+        return prev; 
       }
 
-      // Save the updated picked questions to sessionStorage and localStorage
+   
       sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
       localStorage.setItem("pickedQuestions", JSON.stringify(updated));
 
@@ -416,9 +448,10 @@ const QuestionPages = () => {
               <FilterDropdown
                 name="Difficulty"
                 label="Difficulty"
-                value={filteredQuestions.Difficulty}
+                value={filters.Difficulty}
                 onChange={handleFilterChange}
-                options={[...new Set(questions?.map((q) => q.Difficulty))]}
+                options={["Low", "Medium", "High"]}
+                // options={[...new Set(filteredQuestions?.map((q) => q.Difficulty))]}
               />
             </div>
           </div>
@@ -451,25 +484,23 @@ const QuestionPages = () => {
                       }`}
                     >
                       <div className="flex align-center ">
-                        {
-                          question.AppearedIn !== "" && (
-                            <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                            {question.AppearedIn} 
+                        {question.AppearedIn !== "" && (
+                          <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                            {question.AppearedIn}
                           </div>
-                          )
-                        }
-                 
-                      {/* Pick/Remove Button (Top Right) */}
-                      <button
-                        className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
-                          isPicked
-                            ? "bg-red-500 hover:bg-red-600 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                      >
-                        {isPicked ? "Remove" : "Pick"}
-                      </button>
-</div>
+                        )}
+
+                        {/* Pick/Remove Button (Top Right) */}
+                        <button
+                          className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
+                            isPicked
+                              ? "bg-red-500 hover:bg-red-600 text-white"
+                              : "bg-blue-600 hover:bg-blue-700 text-white"
+                          }`}
+                        >
+                          {isPicked ? "Remove" : "Pick"}
+                        </button>
+                      </div>
                       {/* Question Text + Image */}
                       <div className="flex w-full gap-3">
                         <div className="w-[80%] text-sm text-gray-800">

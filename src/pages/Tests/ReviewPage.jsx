@@ -52,6 +52,10 @@ const ReviewPage = () => {
   
       toast.success("All questions saved to DB successfully!");
       navigate("/TCreation");
+      sessionStorage.removeItem("AutoPickedQuestions");
+      sessionStorage.removeItem("pickedQuestions");
+      localStorage.removeItem("AutoPickedQuestions");
+      localStorage.removeItem("pickedQuestions");
     } catch (error) {
       console.error("Error submitting questions:", error);
       toast.error("Something went wrong while submitting the questions.");

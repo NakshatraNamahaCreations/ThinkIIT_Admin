@@ -54,8 +54,12 @@ const ReviewPage = () => {
       navigate("/TCreation");
       sessionStorage.removeItem("AutoPickedQuestions");
       sessionStorage.removeItem("pickedQuestions");
+      sessionStorage.removeItem("pickedQuestions");
+      sessionStorage.removeItem("questionDetails");
+      sessionStorage.removeItem("selectionType");
       localStorage.removeItem("AutoPickedQuestions");
       localStorage.removeItem("pickedQuestions");
+      
     } catch (error) {
       console.error("Error submitting questions:", error);
       toast.error("Something went wrong while submitting the questions.");
@@ -305,33 +309,40 @@ const ReviewPage = () => {
           </div>
         </div>
         <div ref={printRef} className="mt-4">
-        {activeSection && sectionQuestions[activeSection] ? (
-  Object.keys(sectionQuestions[activeSection].pickedTopics).map((topicName) =>
-    sectionQuestions[activeSection].pickedTopics[topicName].map(
-      (question, index) => (
-        <div
-          key={question._id}
-          className="mt-2 p-2 border rounded-md bg-white"
-        >
-          <p className="font-medium text-gray-800 mb-1">
-            {index + 1}. {question.English}
-          </p>
+  {activeSection && sectionQuestions[activeSection] ? (
+    Object.keys(sectionQuestions[activeSection].pickedTopics).map((topicName) => {
+      let questionNumber = 1; 
 
-          {question.OptionsEnglish?.split("\\\\").map((opt, idx) => (
-            <p key={idx} className="text-sm text-gray-600 ml-4">
-              {`${opt.trim()}`}
-            </p>
-          ))}
-        </div>
-      )
-    )
-  )
-) : (
-  <p className="text-gray-600 mt-4">
-    No questions found for this section.
-  </p>
-)}
-      </div>
+      return sectionQuestions[activeSection].pickedTopics[topicName].map(
+        (question) => {
+          return (
+            <div
+              key={question._id}
+              className="mt-2 p-2 border rounded-md bg-white"
+            >
+              <p className="font-medium text-gray-800 mb-1">
+               {question.English} 
+              </p>
+
+              {question.OptionsEnglish?.split("\\\\").map((opt, idx) => (
+                <p key={idx} className="text-sm text-gray-600 ml-4">
+                  {`${opt.trim()}`}
+                </p>
+              ))}
+            </div>
+          );
+        }
+      );
+    })
+  ) : (
+    <p className="text-gray-600 mt-4">
+      No questions found for this section.
+    </p>
+  )}
+</div>
+
+
+
 
         <div className="mt-4 sticky bottom-0 bg-white p-3 shadow-md flex flex-wrap justify-center gap-4">
           <button

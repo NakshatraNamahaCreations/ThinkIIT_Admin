@@ -30,14 +30,7 @@ const DefineSyllabus = () => {
 
     setIsAllSectionsComplete(allSectionsComplete);
   }, [selectedTopics, savedSections]);
-  useEffect(() => {
-    // Check if selectedTopics exist in sessionStorage
-    const storedSelectedTopics = sessionStorage.getItem("selectedTopics");
-    if (storedSelectedTopics) {
-      const parsedSelectedTopics = JSON.parse(storedSelectedTopics);
-      setSelectedTopics(parsedSelectedTopics); // Update state with the stored topics
-    }
-  }, []);
+
   const fetchTestDataById = async (id) => {
     try {
       const data = await testServices.getTestById(id);
@@ -307,27 +300,23 @@ const DefineSyllabus = () => {
           </h6>
           <div className="flex flex-wrap gap-2">
             {chapter.topics.length > 0 ? (
-              chapter.topics.map((topic) => {
-                const isSelected =
-                selectedTopics[activeSection]?.[chapter._id]?.some(
-                  (t) => t.topicName === topic.topicName
-                ) ?? false;
-           return(
+              chapter.topics.map((topic) => (
                 <button
                   key={topic.topicName}
                   onClick={() => toggleTopic(chapter._id, topic)}
                   style={{ fontSize: "12px" }}
                   className={`px-2 py-1.5 border rounded-md text-xs font-medium transition-all  ${
-                    isSelected
+                    selectedTopics[activeSection]?.[chapter._id]?.includes(
+                      topic
+                    )
                       ? "bg-indigo-600 text-white"
                       : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                   }`}
                 >
                   {topic.topicName}
                 </button>
-             )
-            })
-          ): (
+              ))
+            ) : (
               <p className="text-sm text-gray-400">No topics</p>
             )}
           </div>

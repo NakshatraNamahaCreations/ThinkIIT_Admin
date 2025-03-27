@@ -68,7 +68,7 @@ const testServices = {
   },
 
   getTestById: async (id) => {
-    console.log("inside api", id);
+    
     try {
       const response = await axios.get(`${config.BASE_URL_TEST}newTest/${id}`);
       return response.data;
@@ -209,20 +209,20 @@ const testServices = {
   },
 
   // Get Auto Picked Questions by Test ID
-  GetAutoPickedQuestions: async (testId) => {
-    try {
-      const response = await axios.get(
-        `${config.BASE_URL_TEST}question/auto-picked/${testId}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching auto-picked questions:", error);
-      return {
-        success: false,
-        message: "Failed to fetch auto picked questions",
-      };
-    }
-  },
+  // GetAutoPickedQuestions: async (testId) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${config.BASE_URL_TEST}question/auto-picked/${testId}`
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error fetching auto-picked questions:", error);
+  //     return {
+  //       success: false,
+  //       message: "Failed to fetch auto picked questions",
+  //     };
+  //   }
+  // },
 
   // update the test mode
   updateTestMode: async (id, mode) => {
@@ -264,6 +264,25 @@ const testServices = {
       return { success: false, message: "Failed to create assignment" };
     }
   },
+
+  updateTestMode:  async (testId, testMode, testDuration) => {
+    try {
+      const payload = {
+        testMode,
+        testDuration
+      };
+  
+      const response = await axios.put(
+        `${config.BASE_URL_TEST}newTest/${testId}/updateTestMode`,
+        payload
+      );
+  
+      return response.data;
+    } catch (error) {
+      console.error("Error updating test mode:", error);
+      return { success: false, message: "Failed to update test mode" };
+    }
+  }
 };
 
 export default testServices;

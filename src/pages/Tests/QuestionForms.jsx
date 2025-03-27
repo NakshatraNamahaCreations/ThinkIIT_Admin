@@ -4,6 +4,8 @@ import apiServices from "../../services/apiServices";
 import { FaEdit, FaTrash } from "react-icons/fa"; // Import icons
 import { useNavigate, useParams } from "react-router-dom";
 import testServices from "../../services/testService";
+import { Button } from "react-bootstrap";
+import { Modal } from "@mui/material";
 
 const QuestionForms = () => {
   const [questionTypes, setQuestionTypes] = useState([]);
@@ -26,6 +28,8 @@ const QuestionForms = () => {
     const storedSections = sessionStorage.getItem("savedSections");
     return storedSections ? JSON.parse(storedSections) : [];
   });
+  const [errorModalOpen, setErrorModalOpen] = useState(false);  
+  const [errorMessage, setErrorMessage] = useState("");  
 
   useEffect(() => {
     if (!id) return;
@@ -129,10 +133,17 @@ const QuestionForms = () => {
   
   
     if (negativeMarking > 0) {
-      toast.error("Negative marking cannot be a positive number.");
+      setErrorMessage("Negative marking cannot be a positive number.");
+      setErrorModalOpen(true);
       return;
     }
-  
+    if (formData.minQuestionsAnswerable > formData.numberOfQuestions) {
+      setErrorMessage("Minimum number of question cannot be more than the number of questions");
+      setErrorModalOpen(true);
+      return;
+    }
+    console.log("The mini", formData.minQuestionsAnswerable);
+    
     if (negativeMarking < 0 && Math.abs(negativeMarking) > marks) {
       toast.error("Negative marking cannot be greater than the marks per question.");
       return;
@@ -172,7 +183,6 @@ const QuestionForms = () => {
       setSavedSections(updatedSections);
       sessionStorage.setItem("savedSections", JSON.stringify(updatedSections));
   
-      console.log("the updated",updatedSections);
       
       setFormData({
         sectionName: "",
@@ -189,6 +199,21 @@ const QuestionForms = () => {
     }
   };
   
+  const handleModalClose = () => {
+    setErrorModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      sectionName: "",
+      subject: "",
+      questionType: "",
+      marksPerQuestion: "",
+      negativeMarksPerWrongAnswer: "",
+      minQuestionsAnswerable: "",
+      numberOfQuestions: "",
+    });
+  }
   
   const handleEditSection = (index) => {
     const selectedSection = savedSections[index];
@@ -331,6 +356,7 @@ console.log(selectedSection);
             <button
               type="button"
               className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              onClick={handleCancel}
             >
               Cancel
             </button>
@@ -388,6 +414,61 @@ console.log(selectedSection);
           <p className="text-gray-500">No sections saved yet.</p>
         )}
       </div>
+      <Modal
+  open={errorModalOpen}
+  onClose={handleModalClose}
+  aria-labelledby="error-modal"
+  aria-describedby="error-modal-description"
+>
+  <div
+    style={{
+      width: "50%",
+      maxWidth: "500px",
+      margin: "10rem auto",
+      padding: "20px",
+      backgroundColor: "white",
+      borderRadius: "8px",
+      textAlign: "center",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    }}
+  >
+        <div className="flex items-center justify-center mb-4">
+      <span className="text-red-600 text-3xl font-bold">!</span>
+    </div>
+    <h2
+      id="error-modal"
+      style={{
+        fontSize: "1.5rem",
+        fontWeight: "bold",
+        color: "#f44336", // Red color for the title
+      }}
+    >
+      Error
+    </h2>
+    <p
+      id="error-modal-description"
+      style={{
+        fontSize: "1rem",
+        marginBottom: "20px",
+      }}
+    >
+      {errorMessage}
+    </p>
+    <Button
+      onClick={handleModalClose}
+      style={{
+        backgroundColor: "#f44336", // Red color for the button
+        color: "white",
+        padding: "10px 20px",
+        border: "none",
+        borderRadius: "4px",
+        cursor: "pointer",
+      }}
+    >
+      OK
+    </Button>
+  </div>
+</Modal>
     </div>
   );
 };

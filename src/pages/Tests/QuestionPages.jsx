@@ -107,27 +107,59 @@ const QuestionPages = () => {
     fetchQuestions();
   }, [selectedSection]);
 
-  useEffect(() => {
-    const fetchTestDetails = async () => {
-      try {
-        const response = await testServices.getTestById(id);
-        if (response.success && response.data) {
-          setTestDetails(response.data);
+useEffect(() => {
+  const fetchTestDetails = async () => {
+    try {
+      const response = await testServices.getTestById(id);
+      if (response.success && response.data) {
+        setTestDetails(response.data);
 
-          if (response.data.sections.length > 0) {
-            setSelectedSection(response.data.sections[0]);
-          }
-        } else {
-          console.error("Failed to fetch test details.");
+        if (response.data.sections.length > 0) {
+          // Set the first section as the selected one
+          setSelectedSection(response.data.sections[0]);
+
+          // Pre-fetch questions for all sections and store them
+          const allQuestions = await Promise.all(
+            response.data.sections.map(async (section) => {
+              const payload = {
+                Subject: section.subject?.trim(),
+                chapter: section.chapter?.map((chap) => chap.chapterName.trim()) || [],
+                topic: section.topic?.map((topic) => topic.topicName.trim()) || [],
+                questionType: section.questionType?.trim(),
+              };
+              const response = await testServices.GetFilteredQuestions(payload);
+              return { sectionId: section._id, questions: response };
+            })
+          );
+
+          // Update state with all questions
+          const questionsMap = {};
+          allQuestions.forEach(({ sectionId, questions }) => {
+            questionsMap[sectionId] = questions;
+          });
+
+          setSectionWiseQuestions(questionsMap);
         }
-      } catch (error) {
-        console.error("API Error:", error);
+      } else {
+        console.error("Failed to fetch test details.");
       }
-    };
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+  };
 
-    fetchTestDetails();
-  }, [id]);
+  fetchTestDetails();
+}, [id]);
+// const handleCheck = (e) => {
+//   const {name, value} = e.target.value;
+//   setFilters(() => {
+// const newFilter = {
+//   ...prevFilter,
+//   [name]: value,
 
+// }
+//   })
+// }
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
   
@@ -161,49 +193,48 @@ const QuestionPages = () => {
       console.warn("Missing sectionId or topicName");
       return;
     }
-
+  
     const sectionId = selectedSection._id;
     const trimmedTopicName = topicName.trim();
     const sectionMaxQuestions = selectedSection.numberOfQuestions;
-
+  
     setPickedQuestions((prev) => {
       const prevSection = prev[sectionId] || {};
       const prevTopic = prevSection[trimmedTopicName] || {};
       const isAlreadyPicked = !!prevTopic[questionId];
-
+  
       const updatedTopic = {
         ...prevTopic,
-        ...(isAlreadyPicked ? {} : { [questionId]: true }),
+        ...(isAlreadyPicked ? {} : { [questionId]: true }), // Toggle the pick
       };
-
+  
       if (isAlreadyPicked) delete updatedTopic[questionId];
-
+  
       const updatedSection = {
         ...prevSection,
         [trimmedTopicName]: updatedTopic,
       };
-
+  
       const updated = {
         ...prev,
         [sectionId]: updatedSection,
       };
-
-      const selectedQuestionCount = Object.keys(
-        updatedSection[trimmedTopicName]
-      ).length;
-
-      if (selectedQuestionCount > sectionMaxQuestions) {
   
-        return prev; 
+      const selectedQuestionCount = Object.keys(updatedSection[trimmedTopicName]).length;
+  
+      // Ensure the number of selected questions doesn't exceed the limit
+      if (selectedQuestionCount > sectionMaxQuestions) {
+        return prev;
       }
-
-   
+  
+      // Persist the updated picked questions to sessionStorage and localStorage
       sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
       localStorage.setItem("pickedQuestions", JSON.stringify(updated));
-
+  
       return updated;
     });
   };
+  
 
   const toggleSolution = (questionId) => {
     setShowSolution((prev) => ({
@@ -235,6 +266,69 @@ const QuestionPages = () => {
 
   //   fetchAutoPickedQuestions();
   // }, [testDetails, selectedSection]);
+  useEffect(() => {
+    const fetchAutoPickedQuestions = async () => {
+      // Retrieve the auto-picked questions from sessionStorage
+      const saved = sessionStorage.getItem("AutoPickedQuestions");
+  
+      if (saved && testDetails?.sections?.length > 0) {
+        try {
+          const autoPicked = JSON.parse(saved);
+          const merged = { ...pickedQuestions };
+  
+          testDetails.sections.forEach((section) => {
+            const sectionId = section._id;
+            if (autoPicked[sectionId]) {
+              // Merge the auto-picked questions for this section
+              merged[sectionId] = {
+                ...(merged[sectionId] || {}),
+                ...autoPicked[sectionId],
+              };
+            }
+          });
+  
+          // Update pickedQuestions state with merged data
+          setPickedQuestions(merged);
+  
+          // Fetch full question details for all picked questions
+          const questionIds = [];
+          Object.values(autoPicked).forEach((sectionData) => {
+            Object.values(sectionData).forEach((topicData) => {
+              Object.keys(topicData).forEach((qId) => questionIds.push(qId));
+            });
+          });
+  
+   
+          const fullQuestions = await GetQuestionByQid(id, questionIds);
+  
+        
+          if (fullQuestions.success) {
+    
+            Object.keys(fullQuestions.data).forEach((qId, index) => {
+             
+              const fullQuestion = fullQuestions.data[index];
+              merged[sectionId] = {
+                ...(merged[sectionId] || {}),
+                [qId]: fullQuestion,
+              };
+            });
+  
+            // Update the picked questions state
+            setPickedQuestions(merged);
+  
+            // Persist to sessionStorage and localStorage
+            sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
+            localStorage.setItem("pickedQuestions", JSON.stringify(merged));
+          }
+        } catch (error) {
+          console.error("Error parsing AutoPickedQuestions:", error);
+        }
+      }
+    };
+  
+    fetchAutoPickedQuestions();
+  }, [testDetails]);
+  
 
   const handleSubmit = () => {
     try {
@@ -357,7 +451,17 @@ const QuestionPages = () => {
       }
     }
   }, [testDetails]);
-
+  const GetQuestionByQid = async (id, mode) => {
+    try {
+      const response = await testServices.GetQuestionByQid(id, mode);
+        // Pass the question IDs and the mode to the backend
+    
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      return { success: false, message: "Failed to fetch questions" };
+    }
+  };
   useEffect(() => {
     localStorage.setItem("pickedQuestions", JSON.stringify(pickedQuestions));
   }, [pickedQuestions]);
@@ -492,14 +596,16 @@ const QuestionPages = () => {
 
                         {/* Pick/Remove Button (Top Right) */}
                         <button
-                          className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
-                            isPicked
-                              ? "bg-red-500 hover:bg-red-600 text-white"
-                              : "bg-blue-600 hover:bg-blue-700 text-white"
-                          }`}
-                        >
-                          {isPicked ? "Remove" : "Pick"}
-                        </button>
+                        className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
+                          isPicked
+                            ? "bg-red-500 hover:bg-red-600 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                        onClick={() => togglePickQuestion(question._id, question.Topic)} 
+                      >
+                        {isPicked ? "Remove" : "Pick"}
+                      </button>
+
                       </div>
                       {/* Question Text + Image */}
                       <div className="flex w-full gap-3">

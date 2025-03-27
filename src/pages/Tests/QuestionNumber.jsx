@@ -35,11 +35,52 @@ const QuestionNumber = () => {
     }
   };
 
-  const handleQuestionChange = (sectionId, topicName, value, chapterId) => {
-    const num = parseInt(value, 10) || 0;
-    const section = savedSections.find((sec) => sec._id === sectionId);
-    const maxQuestions = section?.numberOfQuestions || 0;
+  // const handleQuestionChange = (sectionId, topicName, value, chapterId) => {
+  //   const num = parseInt(value, 10) || 0;
+  //   const section = savedSections.find((sec) => sec._id === sectionId);
+  //   const maxQuestions = section?.numberOfQuestions || 0;
 
+  //   const updatedSection = {
+  //     ...selectedTopics[sectionId],
+  //     [topicName]: {
+  //       topicName,
+  //       numberOfQuestions: num,
+  //       chapterId,
+  //     },
+  //   };
+
+  //   const total = Object.values(updatedSection).reduce(
+  //     (sum, topic) => sum + topic.numberOfQuestions,
+  //     0
+  //   );
+
+  //   if (total > maxQuestions) {
+  //     toast.error(
+  //       `You can only assign ${maxQuestions} questions in ${section.subject}.`
+  //     );
+  //     return;
+  //   }
+
+  //   setSelectedTopics((prev) => ({
+  //     ...prev,
+  //     [sectionId]: updatedSection,
+  //   }));
+
+  //   setSectionTotals((prev) => ({
+  //     ...prev,
+  //     [sectionId]: total,
+  //   }));
+  // };
+
+  const isValid = savedSections.every(
+    (section) => sectionTotals[section._id] === section.numberOfQuestions
+  );
+
+  const handleQuestionChange = (sectionId, topicName, value, chapterId) => {
+    const num = parseInt(value, 10) || 0;  // Get the number of questions from the input field
+    const section = savedSections.find((sec) => sec._id === sectionId);  // Get the section data
+    const maxQuestions = section?.numberOfQuestions || 0;  // Get the max allowed questions for the section
+  
     const updatedSection = {
       ...selectedTopics[sectionId],
       [topicName]: {
@@ -48,34 +89,36 @@ const QuestionNumber = () => {
         chapterId,
       },
     };
-
+  
+    // Calculate total questions for the section
     const total = Object.values(updatedSection).reduce(
       (sum, topic) => sum + topic.numberOfQuestions,
       0
     );
-
+  
+    // Check if the total number of questions exceeds the max allowed
     if (total > maxQuestions) {
-      toast.error(
-        `You can only assign ${maxQuestions} questions in ${section.subject}.`
-      );
-      return;
+      toast.error(`You can only assign ${maxQuestions} questions in ${section.subject}.`);
+      return;  // Prevent further changes if limit is exceeded
     }
-
+  
+    // Update state with the new selected topics
     setSelectedTopics((prev) => ({
       ...prev,
       [sectionId]: updatedSection,
     }));
-
+  
+    // Update total questions for the section
     setSectionTotals((prev) => ({
       ...prev,
       [sectionId]: total,
     }));
+  
+
   };
+  
 
-  const isValid = savedSections.every(
-    (section) => sectionTotals[section._id] === section.numberOfQuestions
-  );
-
+  
   const handleNext = async () => {
     if (!isValid) {
       toast.error(
@@ -83,14 +126,14 @@ const QuestionNumber = () => {
       );
       return;
     }
-
+  
     try {
       for (const section of savedSections) {
         const sectionId = section._id;
         if (!selectedTopics[sectionId]) continue;
-
+  
         const formattedTopics = Object.values(selectedTopics[sectionId]);
-
+  
         const formattedTopic = Object.entries(selectedTopics[sectionId]).map(
           ([topicName, topicData]) => ({
             topicName,
@@ -98,44 +141,51 @@ const QuestionNumber = () => {
             chapterId: topicData.chapterId,
           })
         );
-        console.log("the format",formattedTopics);
 
+        console.log();
+        
+  
+        console.log("the format", sectionTotals[sectionId]);
+  
         // If AutoPick is selected, trigger Auto Pick API
         if (selectionType === "Auto") {
           console.log("Auto Pick Payload", {
             sectionId,
             topics: formattedTopic,
-            totalQuestions: sectionTotals[sectionId],
+            totalQuestions: sectionTotals[sectionId], // Make sure it's using sectionTotals for each section
           });
+  
           const autoPickResponse = await testServices.AutoPickQuestions(id, {
             sectionId,
             topics: formattedTopic,
-            totalQuestions: sectionTotals[sectionId], 
+            totalQuestions: sectionTotals[sectionId], // Pass the total questions dynamically
           });
-
+  
           if (!autoPickResponse.success) {
             toast.error(`Auto picking failed for section: ${section.subject}`);
             return;
           }
-
+  
           const autoPicked = autoPickResponse.data;
-
+  
           const existing = JSON.parse(
             sessionStorage.getItem("AutoPickedQuestions") || "{}"
           );
           const updated = { ...existing };
-
+  
           if (!updated[sectionId]) updated[sectionId] = {};
-
+  
           Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
             updated[sectionId][topicName] = {
               ...(updated[sectionId][topicName] || {}),
               ...questionMap,
             };
           });
-
+  
           sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
         }
+  
+        // If Auto is not selected, handle Manual pick
         const formData = {
           testId: id,
           sectionId,
@@ -144,19 +194,19 @@ const QuestionNumber = () => {
           topics: formattedTopics,
           questionSelection: "Manual",
         };
-
+  
         const res = await testServices.defineChapterAndTopics(
           id,
           sectionId,
           formData
         );
-
+  
         if (!res.success) {
           toast.error(`Failed to save topics for ${section.subject}`);
           return;
         }
       }
-
+  
       toast.success("Topics updated successfully!");
       navigate(`/questionPage/${id}`, { state: { selectedTopics } });
     } catch (error) {
@@ -164,6 +214,7 @@ const QuestionNumber = () => {
       console.error("API Error:", error);
     }
   };
+  
 
   return (
     <div className="p-4 mx-auto bg-white rounded-lg shadow-md ">

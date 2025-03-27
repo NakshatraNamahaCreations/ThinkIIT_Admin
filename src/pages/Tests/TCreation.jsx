@@ -174,7 +174,9 @@ const TCreation = () => {
               <th className="px-4 py-3 text-left">Test Name</th>
               <th className="px-4 py-3 text-left">Created Date  </th>
               <th className="px-4 py-3 text-left">Assigned Batch</th>
+              <th className="px-4 py-3 text-left">Test Duration</th>
               <th className="px-4 py-3 text-left">Actions</th>
+        
             </tr>
           </thead>
 
@@ -182,7 +184,7 @@ const TCreation = () => {
             {filteredAssignments.length > 0 ? (
               filteredAssignments.map((assignment, index) => (
                 <tr
-                  key={assignment._id}
+                  key={assignment._id}  
                   className="border-t hover:bg-gray-50 transition-all"
                 >
                   <td className="px-4 py-3 text-gray-600">{index + 1}</td>
@@ -201,6 +203,7 @@ const TCreation = () => {
                       0}
                   </td> */}
                   <td className="px-4 py-3 text-gray-600"></td>
+                  <td className="px-4 py-3 text-gray-600">{assignment.testDuration}</td>
                   <td className="px-4 py-3 flex items-center gap-4 text-indigo-600 font-medium">
                     <button className="hover:underline" onClick={()=>handleOpenView(assignment._id)}>View</button>
                     <button className="hover:underline" onClick={()=>navigate(`/questionForm/${assignment._id}`)}>Edit</button>
@@ -244,6 +247,7 @@ const TCreation = () => {
                       <MdDelete size={20} />
                     </button>
                   </td>
+              
                 </tr>
               ))
             ) : (

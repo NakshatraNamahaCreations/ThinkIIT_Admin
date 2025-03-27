@@ -32,7 +32,6 @@ const QuestionDistributionSidebar = ({
   const fetchTestDataById = async (testId) => {
     try {
       const response = await testServices.getTestById(testId);
-      console.log("Fetched test data:", response);
 
       if (response?.success && response?.data?.sections) {
         setSections(response.data.sections);

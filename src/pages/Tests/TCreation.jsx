@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import axios from "axios";
 import ViewModal from "./components/ViewModal";
+import { formatDate } from "../../utils/helper";
 
 const style = {
   position: "absolute",
@@ -72,12 +73,20 @@ const TCreation = () => {
   };
 
   const handleDeleteTest = async (id) => {
+    const payload = {
+      testId: id
+    }
+
+
     if (!window.confirm("Are you sure you want to delete this test?")) return;
 
     try {
       // const response = await testServices.deleteTestById(id);
       // if (response.success) {
         toast.success("Test deleted successfully!");
+        let deleteItem = [...assignments];
+        setAssignments(deleteItem.filter((item) => item._id !== id));
+        const res = await testServices.deleteTest(payload);
         // fetchTests();
       // } else {
       //   toast.error(response.message || "Failed to delete test.");
@@ -160,8 +169,7 @@ const TCreation = () => {
             <tr>
               <th className="px-4 py-3 text-left">SL No</th>
               <th className="px-4 py-3 text-left">Test Name</th>
-              <th className="px-4 py-3 text-left">Class</th>
-              <th className="px-4 py-3 text-left">No. of Sections</th>
+              <th className="px-4 py-3 text-left">Created Date  </th>
               <th className="px-4 py-3 text-left">Assigned Batch</th>
               <th className="px-4 py-3 text-left">Actions</th>
             </tr>
@@ -178,20 +186,23 @@ const TCreation = () => {
                   <td className="px-4 py-3 font-medium text-gray-800">
                     {assignment.testName || "Untitled"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {assignment.class || "-"}
+                  <td className="px-4 py-3 font-medium text-gray-800">
+                    {formatDate(assignment.createdAt) || "Untitled"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  {/* <td className="px-4 py-3 text-gray-600">
+                    {assignment.class || "-"}
+                  </td> */}
+                  {/* <td className="px-4 py-3 text-gray-600">
                     {assignment.noOfSections ||
                       assignment.sections?.length ||
                       0}
-                  </td>
+                  </td> */}
                   <td className="px-4 py-3 text-gray-600"></td>
                   <td className="px-4 py-3 flex items-center gap-4 text-indigo-600 font-medium">
                     <button className="hover:underline" onClick={()=>handleOpenView(assignment._id)}>View</button>
 
                     {/* Replace the Switch with Checkbox */}
-                    <FormGroup row>
+                    {/* <FormGroup row>
                       <FormControlLabel
                         control={
                           <Checkbox
@@ -219,7 +230,7 @@ const TCreation = () => {
                         }
                         label="Offline"
                       />
-                    </FormGroup>
+                    </FormGroup> */}
 
                     <button
                       onClick={() => handleDeleteTest(assignment._id)}
@@ -243,7 +254,8 @@ const TCreation = () => {
       </div>
       <ViewModal open={openView} onClose={handleCloseView} testId={selectedTestView} />
       {/* Modal */}
-      <Modal
+
+      {/* <Modal
         open={open}
         onClose={handleClose}
         aria-labelledby="modal-modal-title"
@@ -254,9 +266,9 @@ const TCreation = () => {
             {testStatus[selectedTest] ? "Test Duration" : "Offline Options"}
           </Typography>
 
-          {/* Conditionally render content based on status */}
+   
           {testStatus[selectedTest] ? (
-            // If the status is Online, show Test Duration field
+
             <>
               <TextField
                 label="Duration"
@@ -274,11 +286,11 @@ const TCreation = () => {
               </Button>
             </>
           ) : (
-            // If the status is Offline, show Download and Print buttons
+     
             <>
               <Button
                 onClick={() => {
-                  /* Implement download functionality */
+     
                 }}
                 variant="outlined"
                 color="primary"
@@ -288,7 +300,7 @@ const TCreation = () => {
               </Button>
               <Button
                 onClick={() => {
-                  /* Implement print functionality */
+              
                 }}
                 variant="outlined"
                 color="primary"
@@ -299,7 +311,8 @@ const TCreation = () => {
             </>
           )}
         </Box>  
-      </Modal>
+      </Modal> */}
+      
       <NewAssignmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

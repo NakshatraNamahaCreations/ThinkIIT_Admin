@@ -45,7 +45,6 @@ const DefineSyllabus = () => {
               return section;
             }
 
-
             const chapterData = await apiServices.fetchChapter(subID);
 
             const allTopics = await Promise.all(
@@ -55,7 +54,6 @@ const DefineSyllabus = () => {
               })
             );
 
-      
             const formattedChapters = chapterData.map((chapter) => {
               const matchedTopics =
                 allTopics.find((t) => t.chapterId === chapter._id)?.topics ||
@@ -66,7 +64,6 @@ const DefineSyllabus = () => {
                 topics: matchedTopics,
               };
             });
-
 
             return { ...section, chapters: formattedChapters };
           })
@@ -140,16 +137,24 @@ const DefineSyllabus = () => {
   };
 
   const toggleTopic = (chapterId, topic) => {
-    setSelectedTopics((prev) => ({
-      ...prev,
-      [activeSection]: {
-        ...prev[activeSection],
-        [chapterId]: prev[activeSection]?.[chapterId]?.includes(topic)
-          ? prev[activeSection][chapterId].filter((t) => t !== topic)
-          : [...(prev[activeSection]?.[chapterId] || []), topic],
-      },
-    }));
+    setSelectedTopics((prev) => {
+      const updatedTopics = {
+        ...prev,
+        [activeSection]: {
+          ...prev[activeSection],
+          [chapterId]: prev[activeSection]?.[chapterId]?.includes(topic)
+            ? prev[activeSection][chapterId].filter((t) => t !== topic)
+            : [...(prev[activeSection]?.[chapterId] || []), topic],
+        },
+      };
+  
+      // Persist selected topics in sessionStorage
+      sessionStorage.setItem("selectedTopics", JSON.stringify(updatedTopics));
+  
+      return updatedTopics;
+    });
   };
+  
 
   const selectAllTopics = (chapterId, topics) => {
     setSelectedTopics((prev) => ({
@@ -164,11 +169,8 @@ const DefineSyllabus = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!questionSelectionType) {
-      toast.error("Please select how you want to pick questions (Manual or Auto).");
-      return;
-    }
+  const handleSubmit = async (selectionType) => {
+    setQuestionSelectionType(selectionType);
   
     const allSectionsWithTopics = Object.entries(selectedTopics).filter(
       ([sectionId, chapters]) =>
@@ -206,48 +208,43 @@ const DefineSyllabus = () => {
           }))
         );
   
-       
-        if (questionSelectionType === "Auto") {
-          const autoPickResponse = await testServices.AutoPickQuestions(id, {
-            sectionId,
-            topics: formattedTopics,
-            totalQuestions: 10,
-          });
-        
-          if (!autoPickResponse.success) {
-            toast.error(`Auto picking failed for section: ${sectionDetails.subject}`);
-            return;
-          }
-        
-          
-          const autoPicked = autoPickResponse.data;
-        
-    
-          const existing = JSON.parse(sessionStorage.getItem("AutoPickedQuestions") || "{}");
-        
-          const updated = { ...existing };
-        
-       
-          if (!updated[sectionId]) updated[sectionId] = {};
-        
-          Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
-            updated[sectionId][topicName] = {
-              ...(updated[sectionId][topicName] || {}),
-              ...questionMap,
-            };
-          });
-        
-          sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
-        }
+        sessionStorage.setItem("selectionType", JSON.stringify(selectionType));
 
-        
+        // if (selectionType === "Auto") {
+        //   const autoPickResponse = await testServices.AutoPickQuestions(id, {
+        //     sectionId,
+        //     topics: formattedTopics,
+        //     totalQuestions: 4,
+        //   });
+  
+        //   if (!autoPickResponse.success) {
+        //     toast.error(`Auto picking failed for section: ${sectionDetails.subject}`);
+        //     return;
+        //   }
+  
+        //   const autoPicked = autoPickResponse.data;
+  
+        //   const existing = JSON.parse(sessionStorage.getItem("AutoPickedQuestions") || "{}");
+        //   const updated = { ...existing };
+        //   if (!updated[sectionId]) updated[sectionId] = {};
+  
+        //   Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
+        //     updated[sectionId][topicName] = {
+        //       ...(updated[sectionId][topicName] || {}),
+        //       ...questionMap,
+        //     };
+        //   });
+  
+        //   sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
+        // }
+  
         const formData = {
           testId: id,
           sectionId,
           sectionName: sectionDetails.subject,
           chapter: selectedChapters,
           topics: formattedTopics,
-          questionSelection: questionSelectionType,
+          questionSelection: selectionType,
         };
   
         const res = await testServices.defineChapterAndTopics(id, sectionId, formData);
@@ -258,13 +255,17 @@ const DefineSyllabus = () => {
       }
   
       toast.success("Syllabus saved successfully!");
-      navigate(`/question-selection/${id}`, { state: { selectedTopics } });
+      navigate(`/question-selection/${id}`, { state: { selectedTopics, selectionType } });
     } catch (error) {
       toast.error("Error saving syllabus.");
       console.error("Submission Error:", error);
     }
   };
   
+  useEffect(() => {
+    console.log("the active check",activeSection);
+    
+  })
 
   return (
     <div className=" mx-auto p-6 bg-gray-100 min-h-screen">
@@ -325,10 +326,7 @@ const DefineSyllabus = () => {
       {/* Submit Button */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-6">
         <button
-          onClick={() => {
-            setQuestionSelectionType("Manual"),
-            setTimeout(() => handleSubmit(), 0);}
-          }
+          onClick={() => handleSubmit("Manual")}
           className={`flex items-center gap-2 ${
             questionSelectionType === "Manual"
               ? "bg-indigo-700"
@@ -339,10 +337,7 @@ const DefineSyllabus = () => {
         </button>
 
         <button
-         onClick={() => {
-          setQuestionSelectionType("Auto"),
-          setTimeout(() => handleSubmit(), 0);}
-        }
+  onClick={() => handleSubmit("Auto")}
           className={`flex items-center gap-2 ${
             questionSelectionType === "Auto"
               ? "bg-indigo-600"

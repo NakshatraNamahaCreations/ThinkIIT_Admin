@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import testServices from "../../services/testService";
 
 const QuestionNumber = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { state } = useLocation();
+  const { selectedTopic, questionType } = state || {};
   const [savedSections, setSavedSections] = useState([]);
   const [activeSection, setActiveSection] = useState("");
   const [selectedTopics, setSelectedTopics] = useState({});
   const [sectionTotals, setSectionTotals] = useState({});
+  const [totalQuestions, setTotalQuestions] = useState(0);
+
+  const selectionType = JSON.parse(sessionStorage.getItem("selectionType"));
 
   useEffect(() => {
     fetchTestDataById(id);
@@ -86,6 +91,51 @@ const QuestionNumber = () => {
 
         const formattedTopics = Object.values(selectedTopics[sectionId]);
 
+        const formattedTopic = Object.entries(selectedTopics[sectionId]).map(
+          ([topicName, topicData]) => ({
+            topicName,
+            numberOfQuestions: topicData.numberOfQuestions || 0,
+            chapterId: topicData.chapterId,
+          })
+        );
+        console.log("the format",formattedTopics);
+
+        // If AutoPick is selected, trigger Auto Pick API
+        if (selectionType === "Auto") {
+          console.log("Auto Pick Payload", {
+            sectionId,
+            topics: formattedTopic,
+            totalQuestions: sectionTotals[sectionId],
+          });
+          const autoPickResponse = await testServices.AutoPickQuestions(id, {
+            sectionId,
+            topics: formattedTopic,
+            totalQuestions: sectionTotals[sectionId], 
+          });
+
+          if (!autoPickResponse.success) {
+            toast.error(`Auto picking failed for section: ${section.subject}`);
+            return;
+          }
+
+          const autoPicked = autoPickResponse.data;
+
+          const existing = JSON.parse(
+            sessionStorage.getItem("AutoPickedQuestions") || "{}"
+          );
+          const updated = { ...existing };
+
+          if (!updated[sectionId]) updated[sectionId] = {};
+
+          Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
+            updated[sectionId][topicName] = {
+              ...(updated[sectionId][topicName] || {}),
+              ...questionMap,
+            };
+          });
+
+          sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
+        }
         const formData = {
           testId: id,
           sectionId,

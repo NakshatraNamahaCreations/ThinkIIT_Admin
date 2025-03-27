@@ -17,12 +17,12 @@ const ReviewPage = () => {
   const handleSubmit = async () => {
     try {
       const allSections = Object.keys(sectionQuestions);
-
+  
       for (const sectionId of allSections) {
         const pickedTopics = sectionQuestions[sectionId].pickedTopics;
-
+  
         const questionIds = [];
-
+  
         Object.keys(pickedTopics).forEach((topicName) => {
           pickedTopics[topicName].forEach((question) => {
             if (question._id) {
@@ -30,33 +30,26 @@ const ReviewPage = () => {
             }
           });
         });
-
+  
         if (questionIds.length === 0) {
           console.warn(`No questions found for section ${sectionId}`);
           continue;
         }
-
+    
         const payload = {
           questionBankQuestionId: questionIds,
         };
-
-        const response = await testServices.addQuestionsToSection(
-          id,
-          sectionId,
-          payload
-        );
-
+  
+        const response = await testServices.addQuestionsToSection(id, sectionId, payload);
+  
         if (response.success) {
           console.log(`Saved questions for section ${sectionId}`);
         } else {
-          console.error(
-            `Failed to save section ${sectionId}:`,
-            response.message
-          );
+          console.error(`Failed to save section ${sectionId}:`, response.message);
           toast.error(`Failed to save section ${sectionId}`);
         }
       }
-
+  
       toast.success("All questions saved to DB successfully!");
       navigate("/TCreation");
     } catch (error) {
@@ -67,14 +60,14 @@ const ReviewPage = () => {
 
   useEffect(() => {
     const storedQuestions = sessionStorage.getItem("questionDetails");
-
+  
     if (storedQuestions) {
       const parsedQuestions = JSON.parse(storedQuestions);
-      console.log("Parsed Questions", parsedQuestions); // Log the questions to see their structure
+      console.log("Parsed Questions", parsedQuestions);  // Log the questions to see their structure
       setSectionQuestions(parsedQuestions);
-
+  
       if (Object.keys(parsedQuestions).length > 0) {
-        setActiveSection(Object.keys(parsedQuestions)[0]); // Optionally set the first section as active
+        setActiveSection(Object.keys(parsedQuestions)[0]);  // Optionally set the first section as active
       }
     }
   }, []);
@@ -266,7 +259,7 @@ const ReviewPage = () => {
           Review Picked Questions
         </p>
 
-        <div className="mt-4 flex items-center">
+        {/* <div className="mt-4 flex items-center">
           <span className="text-gray-700 font-semibold mr-5">Mode:</span>
           <button
             className={`ml-3 px-4 py-2 rounded-md font-semibold transition-all ${
@@ -288,9 +281,9 @@ const ReviewPage = () => {
           >
             Offline
           </button>
-        </div>
+        </div> */}
 
-        <div className="mt-5 border-b">
+        <div className="mt-5">
           <div className="flex">
             {Object.keys(sectionQuestions).map((sectionId) => (
               <button
@@ -308,36 +301,33 @@ const ReviewPage = () => {
           </div>
         </div>
         <div ref={printRef} className="mt-4">
-          {activeSection && sectionQuestions[activeSection] ? (
-            Object.keys(sectionQuestions[activeSection].pickedTopics).map(
-              (topicName) =>
-                sectionQuestions[activeSection].pickedTopics[topicName].map(
-                  (question, index) => (
-                    <div
-                      key={question._id}
-                      className="mt-2 p-2 border rounded-md bg-white"
-                    >
-                      <p className="font-medium text-gray-800 mb-1">
-                        {index + 1}. {question.English}
-                      </p>
+        {activeSection && sectionQuestions[activeSection] ? (
+  Object.keys(sectionQuestions[activeSection].pickedTopics).map((topicName) =>
+    sectionQuestions[activeSection].pickedTopics[topicName].map(
+      (question, index) => (
+        <div
+          key={question._id}
+          className="mt-2 p-2 border rounded-md bg-white"
+        >
+          <p className="font-medium text-gray-800 mb-1">
+            {index + 1}. {question.English}
+          </p>
 
-                      {question.OptionsEnglish?.split("\\\\").map(
-                        (opt, idx) => (
-                          <p key={idx} className="text-sm text-gray-600 ml-4">
-                            {`${opt.trim()}`}
-                          </p>
-                        )
-                      )}
-                    </div>
-                  )
-                )
-            )
-          ) : (
-            <p className="text-gray-600 mt-4">
-              No questions found for this section.
+          {question.OptionsEnglish?.split("\\\\").map((opt, idx) => (
+            <p key={idx} className="text-sm text-gray-600 ml-4">
+              {`${opt.trim()}`}
             </p>
-          )}
+          ))}
         </div>
+      )
+    )
+  )
+) : (
+  <p className="text-gray-600 mt-4">
+    No questions found for this section.
+  </p>
+)}
+      </div>
 
         <div className="mt-4 sticky bottom-0 bg-white p-3 shadow-md flex flex-wrap justify-center gap-4">
           <button
@@ -347,7 +337,7 @@ const ReviewPage = () => {
             Back to Questions
           </button>
 
-          {/* Show Download and Print buttons only in Offline mode */}
+          {/* Show Download and Print buttons only in Offline mode
           {examMode === "offline" && activeSection && (
             <>
               <button
@@ -363,7 +353,7 @@ const ReviewPage = () => {
                 Print Question Paper
               </button>
             </>
-          )}
+          )} */}
 
           <button
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition w-full md:w-auto"

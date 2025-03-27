@@ -129,49 +129,49 @@ const QuestionPages = () => {
       console.warn("Missing sectionId or topicName");
       return;
     }
-  
+
     const sectionId = selectedSection._id;
     const trimmedTopicName = topicName.trim();
     const sectionMaxQuestions = selectedSection.numberOfQuestions;
-  
+
     setPickedQuestions((prev) => {
       const prevSection = prev[sectionId] || {};
       const prevTopic = prevSection[trimmedTopicName] || {};
       const isAlreadyPicked = !!prevTopic[questionId];
-  
+
       const updatedTopic = {
         ...prevTopic,
         ...(isAlreadyPicked ? {} : { [questionId]: true }),
       };
-  
+
       if (isAlreadyPicked) delete updatedTopic[questionId];
-  
+
       const updatedSection = {
         ...prevSection,
         [trimmedTopicName]: updatedTopic,
       };
-  
+
       const updated = {
         ...prev,
         [sectionId]: updatedSection,
       };
-  
-      const selectedQuestionCount = Object.keys(updatedSection[trimmedTopicName]).length;
-  
+
+      const selectedQuestionCount = Object.keys(
+        updatedSection[trimmedTopicName]
+      ).length;
+
       if (selectedQuestionCount > sectionMaxQuestions) {
         // toast.error(`You can only pick ${sectionMaxQuestions} questions for this section.`);
         return prev; // Prevent further changes if max questions exceeded
       }
-  
+
       // Save the updated picked questions to sessionStorage and localStorage
       sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
       localStorage.setItem("pickedQuestions", JSON.stringify(updated));
-  
+
       return updated;
     });
   };
-  
-  
 
   const toggleSolution = (questionId) => {
     setShowSolution((prev) => ({
@@ -184,67 +184,38 @@ const QuestionPages = () => {
   //   const fetchAutoPickedQuestions = async () => {
   //     if (testDetails?.questionSelection === "Auto" && selectedSection) {
   //       const response = await testServices.getAutoPickedQuestions(id);
-  
+
   //       if (response.success && response.data) {
   //         const sectionData = response.data[selectedSection._id];
-  
+
   //         if (sectionData) {
   //           const ids = [];
-  
+
   //           Object.values(sectionData).forEach((topicMap) => {
   //             Object.keys(topicMap).forEach((qId) => ids.push(qId));
   //           });
-  
+
   //           setAutoPickedIds(ids);
   //         }
   //       }
   //     }
   //   };
-  
+
   //   fetchAutoPickedQuestions();
   // }, [testDetails, selectedSection]);
-  
-  useEffect(() => {
-    // Fetch auto-picked questions from sessionStorage when the section changes
-    const saved = sessionStorage.getItem("AutoPickedQuestions");
-    
-    if (saved && selectedSection) {
-      try {
-        const autoPicked = JSON.parse(saved);
-        const sectionId = selectedSection._id;
-  
-        // Retrieve the selected questions for the section
-        const newSectionData = autoPicked[sectionId]
-          ? { [sectionId]: autoPicked[sectionId] }
-          : {};
-  
-        // Update pickedQuestions with auto-picked data from sessionStorage
-        setPickedQuestions((prev) => {
-          const merged = { ...prev, ...newSectionData };
-  
-          sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
-          localStorage.setItem("pickedQuestions", JSON.stringify(merged));
-  
-          return merged;
-        });
-      } catch (error) {
-        console.error("Error parsing AutoPickedQuestions:", error);
-      }
-    }
-  }, [selectedSection]);
-  
-  
-  
+
   const handleSubmit = () => {
     try {
       const formattedTestId = id?.testId || id;
       const selectedDetails = {};
-  
+
       Object.keys(pickedQuestions).forEach((sectionId) => {
         const topicMap = pickedQuestions[sectionId];
-        const section = testDetails.sections.find((sec) => sec._id === sectionId);
+        const section = testDetails.sections.find(
+          (sec) => sec._id === sectionId
+        );
         if (!section) return;
-  
+
         selectedDetails[sectionId] = {
           sectionDetails: {
             subject: section.subject,
@@ -255,74 +226,105 @@ const QuestionPages = () => {
           },
           pickedTopics: {},
         };
-  
+
         Object.keys(topicMap).forEach((topicName) => {
           const questionIdsMap = topicMap[topicName];
           const questionIds = Object.keys(questionIdsMap);
-  
+
           // Get full questions from filteredQuestions (or all available questions if needed)
-          const fullQuestions = (sectionWiseQuestions[sectionId] || []).filter((q) =>
-            questionIds.includes(q._id)
-          ).map((q) => ({
-            _id: q._id,
-            English: q.English,
-            OptionsEnglish: q.OptionsEnglish,
-            Answer: q.Answer,
-            Topic: q.Topic,
-            Chapter: q.Chapter,
-            Difficulty: q.Difficulty,
-            Images: q.Images || null,
-            SolutionSteps: q.SolutionSteps || null
-          }));
-  
+          const fullQuestions = (sectionWiseQuestions[sectionId] || [])
+            .filter((q) => questionIds.includes(q._id))
+            .map((q) => ({
+              _id: q._id,
+              English: q.English,
+              OptionsEnglish: q.OptionsEnglish,
+              Answer: q.Answer,
+              Topic: q.Topic,
+              Chapter: q.Chapter,
+              Difficulty: q.Difficulty,
+              Images: q.Images || null,
+              SolutionSteps: q.SolutionSteps || null,
+            }));
+
           selectedDetails[sectionId].pickedTopics[topicName] = fullQuestions;
         });
       });
-  
-      sessionStorage.setItem("questionDetails", JSON.stringify(selectedDetails));
-      console.log("Full question details saved:", selectedDetails);
-  
+
+      const prevDetails = JSON.parse(
+        sessionStorage.getItem("questionDetails") || "{}"
+      );
+      const updatedDetails = { ...prevDetails, ...selectedDetails };
+
+      sessionStorage.setItem("questionDetails", JSON.stringify(updatedDetails));
+      console.log("Full merged question details saved:", updatedDetails);
       navigate(`/questionReview/${formattedTestId}`);
     } catch (error) {
       console.error("Submission Error:", error);
     }
   };
-  
-  
-  
 
   const handleTopicSelect = (section, topic) => {
     setSelectedSection(section);
     setSelectedTopic(topic);
   };
   const saved = localStorage.getItem("pickedQuestions");
-  console.log("pk ques",saved)
+
+  // useEffect(() => {
+  //   // Fetch auto-picked questions from sessionStorage when the section changes
+  //   const saved = sessionStorage.getItem("AutoPickedQuestions");
+
+  //   if (saved && selectedSection) {
+  //     try {
+  //       const autoPicked = JSON.parse(saved);
+  //       const sectionId = selectedSection._id;
+
+  //       // Retrieve the selected questions for the section
+  //       const newSectionData = autoPicked[sectionId]
+  //         ? { [sectionId]: autoPicked[sectionId] }
+  //         : {};
+
+  //       // Update pickedQuestions with auto-picked data from sessionStorage
+  //       setPickedQuestions((prev) => {
+  //         const merged = { ...prev, ...newSectionData };
+
+  //         sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
+  //         localStorage.setItem("pickedQuestions", JSON.stringify(merged));
+
+  //         return merged;
+  //       });
+  //     } catch (error) {
+  //       console.error("Error parsing AutoPickedQuestions:", error);
+  //     }
+  //   }
+  // }, [selectedSection]);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("AutoPickedQuestions");
-    if (saved && selectedSection) {
+    if (saved && testDetails?.sections?.length > 0) {
       try {
         const autoPicked = JSON.parse(saved);
-        const sectionId = selectedSection._id;
-  
-        const transformed = autoPicked[sectionId] 
-          ? { [sectionId]: autoPicked[sectionId] }
-          : autoPicked;
-  
-        console.log("Setting pickedQuestions as:", transformed);
-        setPickedQuestions(transformed);
-  
-        // Optional: update session/local storage
-        sessionStorage.setItem("pickedQuestions", JSON.stringify(transformed));
-        localStorage.setItem("pickedQuestions", JSON.stringify(transformed));
+        const merged = { ...pickedQuestions };
+
+        testDetails.sections.forEach((section) => {
+          const sectionId = section._id;
+          if (autoPicked[sectionId]) {
+            merged[sectionId] = {
+              ...(merged[sectionId] || {}),
+              ...autoPicked[sectionId],
+            };
+          }
+        });
+
+        setPickedQuestions(merged);
+        console.log("the mereged", merged);
+
+        sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
+        // localStorage.setItem("pickedQuestions", JSON.stringify(merged));
       } catch (error) {
         console.error("Error parsing AutoPickedQuestions:", error);
       }
     }
-  }, [selectedSection]);
-  
-  
-  
+  }, [testDetails]);
 
   useEffect(() => {
     localStorage.setItem("pickedQuestions", JSON.stringify(pickedQuestions));
@@ -369,9 +371,8 @@ const QuestionPages = () => {
                     }`}
                     onClick={() => {
                       setSelectedSection(section);
-                      setSelectedTopic(null); 
+                      setSelectedTopic(null);
                     }}
-                    
                   >
                     Section {index + 1} ({section.numberOfQuestions} Qs)
                   </button>
@@ -379,11 +380,11 @@ const QuestionPages = () => {
               </div>
             )}
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-md mt-4">
-            <p className="text-lg font-semibold text-gray-700 mb-3">
+          <div className="bg-white p-1 rounded-lg ">
+            {/* <p className="text-lg font-semibold text-gray-700 mb-3">
               Filter Questions
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            </p> */}
+            <div className="flex flex-row justify-end">
               {/* <FilterDropdown
                 name="Class"
                 label="Class"
@@ -422,26 +423,25 @@ const QuestionPages = () => {
             </div>
           </div>
           {/* Question List */}
-          <div className="mt-5">
+          <div className="">
             {filteredQuestions?.length > 0 ? (
-                   filteredQuestions.filter((question) => {
-                    if (!selectedTopic) return true;
-                    return pickedQuestions[selectedSection?._id]?.[selectedTopic.topicName]?.[question._id];
-                   
-            })?.map((question) => {
-        
+              filteredQuestions
+                .filter((question) => {
+                  if (!selectedTopic) return true;
+                  return pickedQuestions[selectedSection?._id]?.[
+                    selectedTopic.topicName
+                  ]?.[question._id];
+                })
+                ?.map((question) => {
                   const imageMatch = question.English?.match(
                     /\\includegraphics\[.*?\]{(.*?)}/
                   );
                   const imageId = imageMatch ? imageMatch[1] : null;
-                  console.log("Checking isPicked for", {
-                    sectionId: selectedSection?._id,
-                    topic: question.Topic,
-                    questionId: question._id,
-                    isPicked: pickedQuestions[selectedSection?._id]?.[question.Topic]?.[question._id]
-                  });
-                  
-                  const isPicked = pickedQuestions[selectedSection?._id]?.[question.Topic]?.[question._id];
+
+                  const isPicked =
+                    pickedQuestions[selectedSection?._id]?.[question.Topic]?.[
+                      question._id
+                    ];
 
                   return (
                     <div
@@ -450,6 +450,15 @@ const QuestionPages = () => {
                         isPicked ? "bg-green-100 border-green-400" : "bg-white"
                       }`}
                     >
+                      <div className="flex align-center ">
+                        {
+                          question.AppearedIn !== "" && (
+                            <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                            {question.AppearedIn} 
+                          </div>
+                          )
+                        }
+                 
                       {/* Pick/Remove Button (Top Right) */}
                       <button
                         className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
@@ -457,13 +466,10 @@ const QuestionPages = () => {
                             ? "bg-red-500 hover:bg-red-600 text-white"
                             : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
-                        onClick={() =>
-                          togglePickQuestion(question._id, question.Topic)
-                        }
                       >
                         {isPicked ? "Remove" : "Pick"}
                       </button>
-
+</div>
                       {/* Question Text + Image */}
                       <div className="flex w-full gap-3">
                         <div className="w-[80%] text-sm text-gray-800">

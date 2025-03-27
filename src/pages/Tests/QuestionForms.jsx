@@ -146,6 +146,7 @@ const QuestionForms = () => {
       marksPerQuestion: marks,
       minQuestionsAnswerable: parseInt(formData.minQuestionsAnswerable, 10),
       negativeMarksPerWrongAnswer: negativeMarking,
+      
     };
   
     let updatedSections = Array.isArray(savedSections) ? [...savedSections] : [];
@@ -208,6 +209,7 @@ console.log(selectedSection);
       negativeMarksPerWrongAnswer:  selectedSection?.negativeMarksPerWrongAnswer ,
       minQuestionsAnswerable: selectedSection?.minQuestionsAnswerable,
       selectionType: "Auto",
+      subjectId: selectedSection?.subjectId
     
     });
 
@@ -281,18 +283,7 @@ console.log(selectedSection);
               />
             </div>
             {/* Minimum answarable */}
-            <div>
-              <label className="block text-sm font-medium">
-                Minimum AnswearableQuestions
-              </label>
-              <input
-                type="number"
-                name="minQuestionsAnswerable"
-                value={formData.minQuestionsAnswerable}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
+           
 
             {/* Negative Marking */}
             <div>
@@ -317,6 +308,18 @@ console.log(selectedSection);
                 type="number"
                 name="numberOfQuestions"
                 value={formData.numberOfQuestions}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">
+                Minimum AnswearableQuestions
+              </label>
+              <input
+                type="number"
+                name="minQuestionsAnswerable"
+                value={formData.minQuestionsAnswerable}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-700 rounded-md focus:ring-2 focus:ring-indigo-400"
               />

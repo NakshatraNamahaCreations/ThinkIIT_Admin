@@ -14,6 +14,19 @@ const testServices = {
       return { success: false, message: "Failed to create assignment" };
     }
   },
+  deleteTest: async (payload) => {
+    try {
+      const response = await axios.delete(
+        `${config.BASE_URL_TEST}newTest/delete`, 
+        { data: payload } 
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting test:", error);
+      return { success: false, message: "Failed to delete test" };
+    }
+  },
+  
   addSectionDetail: async (id, formData) => {
     try {
       const response = await axios.post(
@@ -88,7 +101,7 @@ const testServices = {
       return { success: false, message: "Failed to add questions" };
     }
   },
-  
+
   GetAllQuestions: async () => {
     try {
       const response = await axios.get(
@@ -177,37 +190,39 @@ const testServices = {
     }
   },
 
-  // Auto Pick Questions 
-// Auto Pick Questions
-AutoPickQuestions: async (testId, payload) => {
-  try {
-    const response = await axios.post(
-      `${config.BASE_URL_QUESTIONS}QB/question/auto-pick`,
-      {
-        testId,
-        ...payload
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error auto picking questions:", error);
-    return { success: false, message: "Failed to auto pick questions" };
-  }
-},
+  // Auto Pick Questions
+  // Auto Pick Questions
+  AutoPickQuestions: async (testId, payload) => {
+    try {
+      const response = await axios.post(
+        `${config.BASE_URL_QUESTIONS}QB/question/auto-pick`,
+        {
+          testId,
+          ...payload,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error auto picking questions:", error);
+      return { success: false, message: "Failed to auto pick questions" };
+    }
+  },
 
-// Get Auto Picked Questions by Test ID
-GetAutoPickedQuestions: async (testId) => {
-  try {
-    const response = await axios.get(
-      `${config.BASE_URL_TEST}question/auto-picked/${testId}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching auto-picked questions:", error);
-    return { success: false, message: "Failed to fetch auto picked questions" };
-  }
-},
-
+  // Get Auto Picked Questions by Test ID
+  GetAutoPickedQuestions: async (testId) => {
+    try {
+      const response = await axios.get(
+        `${config.BASE_URL_TEST}question/auto-picked/${testId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching auto-picked questions:", error);
+      return {
+        success: false,
+        message: "Failed to fetch auto picked questions",
+      };
+    }
+  },
 
   // update the test mode
   updateTestMode: async (id, mode) => {
@@ -223,9 +238,9 @@ GetAutoPickedQuestions: async (testId) => {
     }
   },
 
-  // Get Question By Q Id 
-  
-  GetQuestionsByTestId: async (id, testId, sectionId) => {
+  // Get Question By Q Id
+
+  GetQuestionsByTestId: async (testId, sectionId) => {
     try {
       const response = await axios.get(
         `${config.BASE_URL_TEST}newTest/getQuestions/${testId}/${sectionId}`
@@ -249,7 +264,6 @@ GetAutoPickedQuestions: async (testId) => {
       return { success: false, message: "Failed to create assignment" };
     }
   },
-
 };
 
 export default testServices;

@@ -5,7 +5,7 @@ import { Typography } from "@mui/material";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import QuestionDistributionSidebar from "./components/QuestionDistributionSidebar";
 import axios from "axios";
-
+import "./styles/QuestionPages.css"
 const FilterDropdown = ({ name, label, value, onChange, options }) => {
   return (
     <div className="min-w-[20px]">
@@ -27,10 +27,25 @@ const FilterDropdown = ({ name, label, value, onChange, options }) => {
   );
 };
 
+const config = {
+  loader: { load: ["[tex]/html"] },
+  tex: {
+    packages: { "[+]": ["html"] },
+    inlineMath: [
+      ["$", "$"],
+      ["\\(", "\\)"],
+    ],
+    displayMath: [
+      ["$$", "$$"],
+      ["\\[", "\\]"],
+    ],
+  },
+};
+
 const QuestionPages = () => {
   const { id } = useParams();
   const [questions, setQuestions] = useState([]);
-  const [allQuestions, setAllQuestions] = useState([]); 
+  const [allQuestions, setAllQuestions] = useState([]);
   const [pickedQuestions, setPickedQuestions] = useState({});
   const [testDetails, setTestDetails] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
@@ -85,19 +100,18 @@ const QuestionPages = () => {
 
         const response = await testServices.GetFilteredQuestions(payload);
         setFilteredQuestions(response);
-        setAllQuestions(response); 
+        setAllQuestions(response);
         setSectionWiseQuestions((prev) => ({
           ...prev,
           [selectedSection._id]: response,
         }));
-
 
         const difficultyOptions = [
           ...new Set(response.map((q) => q.Difficulty)),
         ];
         setFilters((prevFilters) => ({
           ...prevFilters,
-          Difficulty: difficultyOptions.length ? difficultyOptions : [], 
+          Difficulty: difficultyOptions.length ? difficultyOptions : [],
         }));
       } catch (err) {
         console.error("Fetch Error:", err.message);
@@ -107,134 +121,147 @@ const QuestionPages = () => {
     fetchQuestions();
   }, [selectedSection]);
 
-useEffect(() => {
-  const fetchTestDetails = async () => {
-    try {
-      const response = await testServices.getTestById(id);
-      if (response.success && response.data) {
-        setTestDetails(response.data);
+  useEffect(() => {
+    const fetchTestDetails = async () => {
+      try {
+        const response = await testServices.getTestById(id);
+        if (response.success && response.data) {
+          setTestDetails(response.data);
 
-        if (response.data.sections.length > 0) {
-          // Set the first section as the selected one
-          setSelectedSection(response.data.sections[0]);
+          if (response.data.sections.length > 0) {
+            setSelectedSection(response.data.sections[0]);
 
-          // Pre-fetch questions for all sections and store them
-          const allQuestions = await Promise.all(
-            response.data.sections.map(async (section) => {
-              const payload = {
-                Subject: section.subject?.trim(),
-                chapter: section.chapter?.map((chap) => chap.chapterName.trim()) || [],
-                topic: section.topic?.map((topic) => topic.topicName.trim()) || [],
-                questionType: section.questionType?.trim(),
-              };
-              const response = await testServices.GetFilteredQuestions(payload);
-              return { sectionId: section._id, questions: response };
-            })
-          );
+            const allQuestions = await Promise.all(
+              response.data.sections.map(async (section) => {
+                const payload = {
+                  Subject: section.subject?.trim(),
+                  chapter:
+                    section.chapter?.map((chap) => chap.chapterName.trim()) ||
+                    [],
+                  topic:
+                    section.topic?.map((topic) => topic.topicName.trim()) || [],
+                  questionType: section.questionType?.trim(),
+                };
+                const response = await testServices.GetFilteredQuestions(
+                  payload
+                );
+                return { sectionId: section._id, questions: response };
+              })
+            );
 
-          // Update state with all questions
-          const questionsMap = {};
-          allQuestions.forEach(({ sectionId, questions }) => {
-            questionsMap[sectionId] = questions;
-          });
+            const questionsMap = {};
+            allQuestions.forEach(({ sectionId, questions }) => {
+              questionsMap[sectionId] = questions;
+            });
 
-          setSectionWiseQuestions(questionsMap);
+            setSectionWiseQuestions(questionsMap);
+          }
+        } else {
+          console.error("Failed to fetch test details.");
         }
-      } else {
-        console.error("Failed to fetch test details.");
+      } catch (error) {
+        console.error("API Error:", error);
       }
-    } catch (error) {
-      console.error("API Error:", error);
-    }
-  };
+    };
 
-  fetchTestDetails();
-}, [id]);
-// const handleCheck = (e) => {
-//   const {name, value} = e.target.value;
-//   setFilters(() => {
-// const newFilter = {
-//   ...prevFilter,
-//   [name]: value,
+    fetchTestDetails();
+  }, [id]);
+  // const handleCheck = (e) => {
+  //   const {name, value} = e.target.value;
+  //   setFilters(() => {
+  // const newFilter = {
+  //   ...prevFilter,
+  //   [name]: value,
 
-// }
-//   })
-// }
+  // }
+  //   })
+  // }
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-  
+
     setFilters((prevFilters) => {
       const newFilters = {
         ...prevFilters,
         [name]: value,
       };
 
-  
-
       let updatedQuestions = allQuestions;
-  
 
       if (newFilters.Difficulty) {
         updatedQuestions = updatedQuestions.filter(
           (question) => question.Difficulty === newFilters.Difficulty.trim()
         );
       }
-  
-  
-  
-    
+
       setFilteredQuestions(updatedQuestions);
       return newFilters;
     });
   };
-  
+
   const togglePickQuestion = (questionId, topicName) => {
     if (!selectedSection || !topicName) {
       console.warn("Missing sectionId or topicName");
       return;
     }
-  
+
     const sectionId = selectedSection._id;
     const trimmedTopicName = topicName.trim();
     const sectionMaxQuestions = selectedSection.numberOfQuestions;
-  
+    // const topicMaxQuestions = selectedSection.topic.find(
+    //   (topic) => topic.topicName === trimmedTopicName
+    // )?.numberOfQuestions;
+    const topicMaxQuestions = selectedSection.topic.find(
+      (item) => item.topicName === trimmedTopicName
+    )?.numberOfQuestions;
+
     setPickedQuestions((prev) => {
       const prevSection = prev[sectionId] || {};
       const prevTopic = prevSection[trimmedTopicName] || {};
       const isAlreadyPicked = !!prevTopic[questionId];
-  
+
       const updatedTopic = {
         ...prevTopic,
-        ...(isAlreadyPicked ? {} : { [questionId]: true }), // Toggle the pick
+        // ...(isAlreadyPicked ? {} : { [questionId]: true }),
+        ...(isAlreadyPicked ? {} : { [questionId]: true }),
       };
-  
+
       if (isAlreadyPicked) delete updatedTopic[questionId];
-  
+
       const updatedSection = {
         ...prevSection,
         [trimmedTopicName]: updatedTopic,
       };
-  
+
       const updated = {
         ...prev,
         [sectionId]: updatedSection,
       };
-  
-      const selectedQuestionCount = Object.keys(updatedSection[trimmedTopicName]).length;
-  
-      // Ensure the number of selected questions doesn't exceed the limit
-      if (selectedQuestionCount > sectionMaxQuestions) {
+
+      const selectedQuestionCount = Object.keys(
+        updatedSection[trimmedTopicName]
+      ).length;
+
+      if (selectedQuestionCount > topicMaxQuestions) {
+        alert(
+          `You cannot select more than ${topicMaxQuestions} questions for the topic: ${trimmedTopicName}`
+        );
         return prev;
       }
-  
-      // Persist the updated picked questions to sessionStorage and localStorage
+
+      if (selectedQuestionCount > sectionMaxQuestions) {
+        alert(
+          `You cannot select more than ${sectionMaxQuestions} questions for this section.`
+        );
+        return prev;
+      }
+
       sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
       localStorage.setItem("pickedQuestions", JSON.stringify(updated));
-  
+      console.log("the latest udpated", updated);
+
       return updated;
     });
   };
-  
 
   const toggleSolution = (questionId) => {
     setShowSolution((prev) => ({
@@ -243,80 +270,47 @@ useEffect(() => {
     }));
   };
 
-  // useEffect(() => {
-  //   const fetchAutoPickedQuestions = async () => {
-  //     if (testDetails?.questionSelection === "Auto" && selectedSection) {
-  //       const response = await testServices.getAutoPickedQuestions(id);
-
-  //       if (response.success && response.data) {
-  //         const sectionData = response.data[selectedSection._id];
-
-  //         if (sectionData) {
-  //           const ids = [];
-
-  //           Object.values(sectionData).forEach((topicMap) => {
-  //             Object.keys(topicMap).forEach((qId) => ids.push(qId));
-  //           });
-
-  //           setAutoPickedIds(ids);
-  //         }
-  //       }
-  //     }
-  //   };
-
-  //   fetchAutoPickedQuestions();
-  // }, [testDetails, selectedSection]);
   useEffect(() => {
     const fetchAutoPickedQuestions = async () => {
-      // Retrieve the auto-picked questions from sessionStorage
       const saved = sessionStorage.getItem("AutoPickedQuestions");
-  
+
       if (saved && testDetails?.sections?.length > 0) {
         try {
           const autoPicked = JSON.parse(saved);
           const merged = { ...pickedQuestions };
-  
+
           testDetails.sections.forEach((section) => {
             const sectionId = section._id;
             if (autoPicked[sectionId]) {
-              // Merge the auto-picked questions for this section
               merged[sectionId] = {
                 ...(merged[sectionId] || {}),
                 ...autoPicked[sectionId],
               };
             }
           });
-  
-          // Update pickedQuestions state with merged data
+
           setPickedQuestions(merged);
-  
-          // Fetch full question details for all picked questions
+
           const questionIds = [];
           Object.values(autoPicked).forEach((sectionData) => {
             Object.values(sectionData).forEach((topicData) => {
               Object.keys(topicData).forEach((qId) => questionIds.push(qId));
             });
           });
-  
-   
+
           const fullQuestions = await GetQuestionByQid(id, questionIds);
-  
-        
+
           if (fullQuestions.success) {
-    
             Object.keys(fullQuestions.data).forEach((qId, index) => {
-             
               const fullQuestion = fullQuestions.data[index];
               merged[sectionId] = {
                 ...(merged[sectionId] || {}),
                 [qId]: fullQuestion,
               };
             });
-  
-            // Update the picked questions state
+
             setPickedQuestions(merged);
-  
-            // Persist to sessionStorage and localStorage
+
             sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
             localStorage.setItem("pickedQuestions", JSON.stringify(merged));
           }
@@ -325,10 +319,9 @@ useEffect(() => {
         }
       }
     };
-  
+
     fetchAutoPickedQuestions();
   }, [testDetails]);
-  
 
   const handleSubmit = () => {
     try {
@@ -382,7 +375,6 @@ useEffect(() => {
       const updatedDetails = { ...prevDetails, ...selectedDetails };
 
       sessionStorage.setItem("questionDetails", JSON.stringify(updatedDetails));
-      console.log("Full merged question details saved:", updatedDetails);
       navigate(`/questionReview/${formattedTestId}`);
     } catch (error) {
       console.error("Submission Error:", error);
@@ -454,8 +446,7 @@ useEffect(() => {
   const GetQuestionByQid = async (id, mode) => {
     try {
       const response = await testServices.GetQuestionByQid(id, mode);
-        // Pass the question IDs and the mode to the backend
-    
+
       return response.data;
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -466,221 +457,184 @@ useEffect(() => {
     localStorage.setItem("pickedQuestions", JSON.stringify(pickedQuestions));
   }, [pickedQuestions]);
 
-  const config = {
-    loader: { load: ["[tex]/html"] },
-    tex: {
-      packages: { "[+]": ["html"] },
-      inlineMath: [
-        ["$", "$"],
-        ["\\(", "\\)"],
-      ],
-      displayMath: [
-        ["$$", "$$"],
-        ["\\[", "\\]"],
-      ],
-    },
+  useEffect(() => {
+    // Trigger MathJax typesetting after content updates
+    setTimeout(() => {
+      window.MathJax?.typeset();
+    }, 0);
+  }, [filteredQuestions, pickedQuestions]);   
+  
+  
+  const cleanLatexString = (latexString) => {
+    return latexString
+      .replace(/\\\\/g, " ")
+      .replace(/\$([^$]+)\$/g, "\\($1\\)") 
+      .replace(/\n/g, "\\\\")
   };
-
+  
+  
+  
   return (
-    <MathJaxContext version={3} config={config}>
-      <div className="flex gap-6  bg-gray-100 min-h-screen">
-        {/* Sidebar: Question Distribution */}
-        <QuestionDistributionSidebar
-          onSelectTopic={handleTopicSelect}
-          pickedQuestions={pickedQuestions}
-          handleSubmit={handleSubmit}
-        />
-
-        {/* Main Content Area: Question Selection */}
-        <div className="w-3/4 bg-white rounded-lg shadow-md">
-          {/* Section Navigation */}
+<MathJaxContext version={3} config={config}>
+  <div className="flex gap-6 bg-gray-100 min-h-screen">
+    <QuestionDistributionSidebar
+      onSelectTopic={handleTopicSelect}
+      pickedQuestions={pickedQuestions}
+      handleSubmit={handleSubmit}
+    />
+    <div className="w-3/4 bg-white rounded-lg shadow-md">
+      <div className="flex space-x-3 bg-white p-3 rounded-lg shadow-md">
+        {testDetails?.sections?.length > 0 && (
           <div className="flex space-x-3 bg-white p-3 rounded-lg shadow-md">
-            {testDetails?.sections?.length > 0 && (
-              <div className="flex space-x-3 bg-white p-3 rounded-lg shadow-md">
-                {testDetails.sections.map((section, index) => (
-                  <button
-                    key={section._id}
-                    className={`px-5 py-2 text-lg font-semibold rounded-md transition-all ${
-                      selectedSection?._id === section._id
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-600 hover:bg-gray-200"
-                    }`}
-                    onClick={() => {
-                      setSelectedSection(section);
-                      setSelectedTopic(null);
-                    }}
-                  >
-                    Section {index + 1} ({section.numberOfQuestions} Qs)
-                  </button>
-                ))}
-              </div>
-            )}
+            {testDetails.sections.map((section, index) => (
+              <button
+                key={section._id}
+                className={`px-5 py-2 text-lg font-semibold rounded-md transition-all ${
+                  selectedSection?._id === section._id
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-600 hover:bg-gray-200"
+                }`}
+                onClick={() => {
+                  setSelectedSection(section);
+                  setSelectedTopic(null);
+                }}
+              >
+                Section {index + 1} ({section.numberOfQuestions} Qs)
+              </button>
+            ))}
           </div>
-          <div className="bg-white p-1 rounded-lg ">
-            {/* <p className="text-lg font-semibold text-gray-700 mb-3">
-              Filter Questions
-            </p> */}
-            <div className="flex flex-row justify-end">
-              {/* <FilterDropdown
-                name="Class"
-                label="Class"
-                value={filters.Class}
-                onChange={handleFilterChange}
-                options={["11", "12"]}
-              />
-              <FilterDropdown
-                name="Subject"
-                label="Subject"
-                value={filters.Subject}
-                onChange={handleFilterChange}
-                options={[...new Set(questions.map((q) => q.Subject))]}
-              /> */}
-              {/* <FilterDropdown
-                name="Chapter"
-                label="Chapter"
-                value={filters.Chapter}
-                onChange={handleFilterChange}
-                options={[...new Set(filteredQuestions?.map((q) => q.Chapter))]}
-              /> */}
-              {/* <FilterDropdown
-                name="Topic"
-                label="Topic"
-                value={filteredQuestions.Topic}
-                onChange={handleFilterChange}
-                options={[...new Set(questions?.map((q) => q.Topic))]}
-              /> */}
-              <FilterDropdown
-                name="Difficulty"
-                label="Difficulty"
-                value={filters.Difficulty}
-                onChange={handleFilterChange}
-                options={["Low", "Medium", "High"]}
-                // options={[...new Set(filteredQuestions?.map((q) => q.Difficulty))]}
-              />
-            </div>
-          </div>
-          {/* Question List */}
-          <div className="">
-            {filteredQuestions?.length > 0 ? (
-              filteredQuestions
-                .filter((question) => {
-                  if (!selectedTopic) return true;
-                  return pickedQuestions[selectedSection?._id]?.[
-                    selectedTopic.topicName
-                  ]?.[question._id];
-                })
-                ?.map((question) => {
-                  const imageMatch = question.English?.match(
-                    /\\includegraphics\[.*?\]{(.*?)}/
-                  );
-                  const imageId = imageMatch ? imageMatch[1] : null;
-
-                  const isPicked =
-                    pickedQuestions[selectedSection?._id]?.[question.Topic]?.[
-                      question._id
-                    ];
-
-                  return (
-                    <div
-                      key={question._id}
-                      className={`mt-3 m-3 p-3 border rounded-md shadow-sm transition-all relative ${
-                        isPicked ? "bg-green-100 border-green-400" : "bg-white"
-                      }`}
-                    >
-                      <div className="flex align-center ">
-                        {question.AppearedIn !== "" && (
-                          <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                            {question.AppearedIn}
-                          </div>
-                        )}
-
-                        {/* Pick/Remove Button (Top Right) */}
-                        <button
-                        className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
-                          isPicked
-                            ? "bg-red-500 hover:bg-red-600 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                        onClick={() => togglePickQuestion(question._id, question.Topic)} 
-                      >
-                        {isPicked ? "Remove" : "Pick"}
-                      </button>
-
-                      </div>
-                      {/* Question Text + Image */}
-                      <div className="flex w-full gap-3">
-                        <div className="w-[80%] text-sm text-gray-800">
-                          <MathJax>
-                            {question.English?.replace(/\\\\/g, " \\[ \n \\] ")
-                              .replace(/\\includegraphics\[.*?\]{.*?}/g, "")
-                              .trim()}
-                          </MathJax>
-                        </div>
-                        {imageId &&
-                          question.Images &&
-                          question.Images[imageId] && (
-                            <img
-                              src={`data:image/jpeg;base64,${question.Images[imageId]}`}
-                              alt="Question Diagram"
-                              className="w-[180px] h-[140px] border rounded-md shadow-sm"
-                            />
-                          )}
-                      </div>
-
-                      {/* Options Section */}
-                      <ul className="mt-2 space-y-1">
-                        {question.OptionsEnglish.split("\\\\")
-                          .filter((option) => option.trim() !== "")
-                          .map((option, index) => {
-                            const correctAnswers =
-                              question.Answer.split("&").map(Number);
-                            const isCorrect = correctAnswers.includes(
-                              index + 1
-                            );
-
-                            return (
-                              <li
-                                key={index}
-                                className={`flex items-center text-xs px-2 py-1 rounded-md ${
-                                  isCorrect
-                                    ? "text-green-600 font-bold "
-                                    : "text-gray-700"
-                                }`}
-                              >
-                                <MathJax
-                                  inline
-                                >{`\\(${option.trim()}\\)`}</MathJax>
-                              </li>
-                            );
-                          })}
-                      </ul>
-
-                      {/* Show Solution Button */}
-                      <button
-                        className="mt-2 text-xs text-blue-600 font-semibold rounded-md hover:bg-blue-100 px-2 py-1 transition"
-                        onClick={() => toggleSolution(question._id)}
-                        style={{ fontSize: "12px" }}
-                      >
-                        {showSolution[question._id]
-                          ? "Hide Solution"
-                          : "Show Solution"}
-                      </button>
-
-                      {showSolution[question._id] && question.SolutionSteps && (
-                        <div className="mt-1 p-2 bg-gray-100 border rounded-md text-xs">
-                          <MathJax>{question.SolutionSteps}</MathJax>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-            ) : (
-              <p className="text-gray-500 mt-3">No questions found.</p>
-            )}
-          </div>
+        )}
+      </div>
+      <div className="bg-white p-1 rounded-lg">
+        <div className="flex flex-row justify-end">
+          <FilterDropdown
+            name="Difficulty"
+            label="Difficulty"
+            value={filters.Difficulty}
+            onChange={handleFilterChange}
+            options={["Low", "Medium", "High"]}
+          />
         </div>
       </div>
-    </MathJaxContext>
+      <div>
+        {filteredQuestions?.length > 0 ? (
+          filteredQuestions.map((question) => {
+            const imageMatch = question.English?.match(
+              /\\includegraphics\[.*?\]{(.*?)}/
+            );
+            const imageId = imageMatch ? imageMatch[1] : null;
+            const cleanQuestion = question.English?.replace(
+              /\\\\/g,
+              " \\[ \n \\] "
+            )
+              .replace(/\\includegraphics\[.*?\]{.*?}/g, "")
+              .trim();
+
+            const isPicked =
+              pickedQuestions[selectedSection?._id]?.[question.Topic]?.[
+                question._id
+              ];
+
+            return (
+              <div
+                key={question._id}
+                className={`mt-3 m-3 p-3 border rounded-md shadow-sm transition-all relative ${
+                  isPicked ? "bg-green-100 border-green-400" : "bg-white"
+                }`}
+              >
+                <div className="flex align-center ">
+                  {question.AppearedIn !== "" && (
+                    <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                      {question.AppearedIn}
+                    </div>
+                  )}
+
+                  <button
+                    className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
+                      isPicked
+                        ? "bg-red-500 hover:bg-red-600 text-white"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
+                    onClick={() =>
+                      togglePickQuestion(question._id, question.Topic)
+                    }
+                  >
+                    {isPicked ? "Remove" : "Pick"}
+                  </button>
+                </div>
+
+                {/* Question Text + Image */}
+                <div className="flex justify-between items-start">
+                  <div className="w-[80%]">
+                    <div className="question-text">
+                      <MathJax inline
+                        style={{ fontSize: "16px", marginBottom: "10px" }}
+                      >
+                       {`${cleanLatexString(question.English)}`}
+                      </MathJax>
+                    </div>
+                  </div>
+                  {imageId &&
+                    question.Images &&
+                    question.Images[imageId] && (
+                      <img
+                        src={`data:image/jpeg;base64,${question.Images[imageId]}`}
+                        alt="Question Diagram"
+                        className="w-[250px] h-[200px] border rounded-lg shadow-sm"
+                      />
+                    )}
+                </div>
+                {/* Options Section */}
+                <ul className="mt-2 space-y-1">
+                  {question.OptionsEnglish.split("\\\\")
+                    .filter((option) => option.trim() !== "")
+                    .map((option, index) => {
+                      const correctAnswers =
+                        question.Answer.split("&").map(Number);
+                      const isCorrect = correctAnswers.includes(index + 1);
+
+                      const cleanOption = cleanLatexString(option.trim());
+
+                      return (
+                        <li
+                          key={index}
+                          className={`mt-1 text-sm flex items-center ${
+                            isCorrect ? "text-green-600 font-bold" : ""
+                          }`}
+                        >
+                          <MathJax inline>{`${cleanOption}`}</MathJax>
+                        </li>
+                      );
+                    })}
+                </ul>
+
+                {/* Show Solution Button */}
+                <button
+                  className="mt-2 text-xs text-blue-600 font-semibold rounded-md hover:bg-blue-100 px-2 py-1 transition"
+                  onClick={() => toggleSolution(question._id)}
+                  style={{ fontSize: "12px" }}
+                >
+                  {showSolution[question._id]
+                    ? "Hide Solution"
+                    : "Show Solution"}
+                </button>
+
+                {showSolution[question._id] && question.SolutionSteps && (
+                  <div className="mt-1 p-2 bg-gray-100 border rounded-md text-xs">
+                    <MathJax>{question.SolutionSteps}</MathJax>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-gray-500 mt-3">No questions found.</p>
+        )}
+      </div>
+    </div>
+  </div>
+</MathJaxContext>
+
   );
 };
 

@@ -12,6 +12,8 @@ import {
 import testServices from "../../../services/testService";
 import jsPDF from "jspdf";
 import { Badge } from "react-bootstrap";
+import { MathJax, MathJaxContext } from "better-react-mathjax";
+
 
 const ViewModal = ({ open, onClose, testId }) => {
   const [testDetails, setTestDetails] = useState(null);
@@ -25,13 +27,11 @@ const ViewModal = ({ open, onClose, testId }) => {
   const [testDuration, setTestDuration] = useState(0);
 
   useEffect(() => {
-    if (testId && open) {
+  
       fetchTestDetails(testId);
-    }
-  }, [testId, open]);
-  useEffect(() => {
-    fetchTestDetails(testId);
-  }, []);
+  
+  }, [testId, open, ]);
+
 
   const handleModeToggle = async (mode) => {
     setIsOnline(mode);
@@ -41,6 +41,7 @@ const ViewModal = ({ open, onClose, testId }) => {
       setIsButton(false);
     } else {
       setIsButton(true);
+      await updateTestMode("offline", "");
     }
   };
 
@@ -239,7 +240,30 @@ const ViewModal = ({ open, onClose, testId }) => {
     window.open(pdfBlob, "_blank");
   };
 
+  
+  const cleanLatexString = (latexString) => {
+    return latexString
+      .replace(/\\\\/g, " ")
+      .replace(/\$([^$]+)\$/g, "\\($1\\)") 
+      .replace(/\n/g, "\\\\")
+  };
+  const config = {
+    loader: { load: ["[tex]/html"] },
+    tex: {
+      packages: { "[+]": ["html"] },
+      inlineMath: [
+        ["$", "$"],
+        ["\\(", "\\)"],
+      ],
+      displayMath: [
+        ["$$", "$$"],
+        ["\\[", "\\]"],
+      ],
+    },
+  };
+
   return (
+    <MathJaxContext version={3} config={config}>
     <Box>
       <Modal open={open} onClose={onClose} aria-labelledby="view-modal-title">
         <Box
@@ -262,45 +286,39 @@ const ViewModal = ({ open, onClose, testId }) => {
             Test Details
           </Typography>
 
-  
-          <Box  style={{display:'flex', gap:'1rem'}}>
+          <Box style={{ display: "flex", gap: "1rem" }}>
+            <Box style={{ display: "flex", gap: "1rem" }}>
+              <Button
+                variant="contained"
+                onClick={() => handleModeToggle("online")}
+                disabled={testDetails?.testMode === "offline"}
+              >
+                Online
+              </Button>
+              {/* Button to toggle to Offline mode */}
+              <Button
+                variant="contained"
+                onClick={() => handleModeToggle("offline")}
+                disabled={testDetails?.testMode === "online"}
+              >
+                Offline
+              </Button>
 
-     
-          <Box style={{ display: 'flex', gap: '1rem' }}>
+              {/* Display Badge for Current Mode */}
+              <Box style={{ marginLeft: "2rem" }}>
+                {testDetails?.testMode === "online" && (
+                  <Badge badgeContent="Online" color="primary">
+                    <Typography>Current Mode: Online</Typography>
+                  </Badge>
+                )}
 
-  <Button
-    variant="contained"
-    onClick={() => handleModeToggle("online")}
-    disabled={testDetails?.testMode === "offline"}
-  >
-    Online
-  </Button>
-
-  {/* Button to toggle to Offline mode */}
-  <Button
-    variant="contained"
-    onClick={() => handleModeToggle("offline")}
-    disabled={testDetails?.testMode === "online"} 
-  >
-    Offline
-  </Button>
-
-  {/* Display Badge for Current Mode */}
-  <Box style={{ marginLeft: '2rem' }}>
-    {testDetails?.testMode === "online" && (
-      <Badge badgeContent="Online" color="primary">
-        <Typography>Current Mode: Online</Typography>
-      </Badge>
-    )}
-
-    {testDetails?.testMode === "offline" && (
-      <Badge badgeContent="Offline" color="secondary">
-        <Typography>Current Mode: Offline</Typography>
-      </Badge>
-    )}
-  </Box>
-</Box>
-
+                {testDetails?.testMode === "offline" && (
+                  <Badge badgeContent="Offline" color="secondary">
+                    <Typography>Current Mode: Offline</Typography>
+                  </Badge>
+                )}
+              </Box>
+            </Box>
           </Box>
           {sections.length > 0 && (
             <Tabs
@@ -337,18 +355,34 @@ const ViewModal = ({ open, onClose, testId }) => {
                   }}
                 >
                   <Typography variant="subtitle1" gutterBottom>
-                    <strong>Q{idx + 1}:</strong> {q.English.replace(/\\/g, "")}
+                  <MathJax
+                        style={{ fontSize: "16px", marginBottom: "10px" }}
+                      >
+                       {`${cleanLatexString(q.English)}`}
+                      </MathJax>
                   </Typography>
+                  <ul className="mt-2 space-y-1">
+                  {q.OptionsEnglish.split("\\\\")
+                    .filter((option) => option.trim() !== "")
+                    .map((option, index) => {
+                      const correctAnswers =
+                        q.Answer.split("&").map(Number);
+                      const isCorrect = correctAnswers.includes(index + 1);
 
-                  <Box component="ul" sx={{ pl: 3 }}>
-                    {q.OptionsEnglish.split(/\\\\/)
-                      .filter((opt) => opt)
-                      .map((option, i) => (
-                        <Typography component="li" key={i}>
-                          {option.replace(/[\(\)]/g, "").trim()}
-                        </Typography>
-                      ))}
-                  </Box>
+                      const cleanOption = cleanLatexString(option.trim());
+
+                      return (
+                        <li
+                          key={index}
+                          className={`mt-1 text-sm flex items-center ${
+                            isCorrect ? "text-green-600 font-bold" : ""
+                          }`}
+                        >
+                          <MathJax inline>{`${cleanOption}`}</MathJax>
+                        </li>
+                      );
+                    })}
+                </ul>
                 </Box>
               ))}
             </Box>
@@ -415,6 +449,7 @@ const ViewModal = ({ open, onClose, testId }) => {
         </Box>
       </Modal>
     </Box>
+    </MathJaxContext>
   );
 };
 

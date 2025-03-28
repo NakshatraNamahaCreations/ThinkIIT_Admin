@@ -17,12 +17,12 @@ const ReviewPage = () => {
   const handleSubmit = async () => {
     try {
       const allSections = Object.keys(sectionQuestions);
-  
+
       for (const sectionId of allSections) {
         const pickedTopics = sectionQuestions[sectionId].pickedTopics;
-  
+
         const questionIds = [];
-  
+
         Object.keys(pickedTopics).forEach((topicName) => {
           pickedTopics[topicName].forEach((question) => {
             if (question._id) {
@@ -30,26 +30,33 @@ const ReviewPage = () => {
             }
           });
         });
-  
+
         if (questionIds.length === 0) {
           console.warn(`No questions found for section ${sectionId}`);
           continue;
         }
-    
+
         const payload = {
           questionBankQuestionId: questionIds,
         };
-  
-        const response = await testServices.addQuestionsToSection(id, sectionId, payload);
-  
+
+        const response = await testServices.addQuestionsToSection(
+          id,
+          sectionId,
+          payload
+        );
+
         if (response.success) {
           console.log(`Saved questions for section ${sectionId}`);
         } else {
-          console.error(`Failed to save section ${sectionId}:`, response.message);
+          console.error(
+            `Failed to save section ${sectionId}:`,
+            response.message
+          );
           toast.error(`Failed to save section ${sectionId}`);
         }
       }
-  
+
       toast.success("All questions saved to DB successfully!");
       navigate("/TCreation");
       sessionStorage.removeItem("AutoPickedQuestions");
@@ -59,7 +66,6 @@ const ReviewPage = () => {
       sessionStorage.removeItem("selectionType");
       localStorage.removeItem("AutoPickedQuestions");
       localStorage.removeItem("pickedQuestions");
-      
     } catch (error) {
       console.error("Error submitting questions:", error);
       toast.error("Something went wrong while submitting the questions.");
@@ -68,14 +74,14 @@ const ReviewPage = () => {
 
   useEffect(() => {
     const storedQuestions = sessionStorage.getItem("questionDetails");
-  
+
     if (storedQuestions) {
       const parsedQuestions = JSON.parse(storedQuestions);
-      console.log("Parsed Questions", parsedQuestions);  // Log the questions to see their structure
+      console.log("Parsed Questions", parsedQuestions); // Log the questions to see their structure
       setSectionQuestions(parsedQuestions);
-  
+
       if (Object.keys(parsedQuestions).length > 0) {
-        setActiveSection(Object.keys(parsedQuestions)[0]);  // Optionally set the first section as active
+        setActiveSection(Object.keys(parsedQuestions)[0]); // Optionally set the first section as active
       }
     }
   }, []);
@@ -84,165 +90,11 @@ const ReviewPage = () => {
     setExamMode((prevMode) => (prevMode === "online" ? "offline" : "online"));
   };
 
-  const printQuestionPaper = async () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    let yPosition = 20;
-
-    const centerText = (text, y) => {
-      const textWidth = doc.getTextWidth(text);
-      doc.text(text, (pageWidth - textWidth) / 2, y);
-    };
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    centerText("DEMO ACCOUNT", yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(14);
-    centerText("Test123", yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(12);
-    centerText(`Date: ${new Date().toLocaleDateString()}`, yPosition);
-    yPosition += 20;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Topics Covered:", 15, yPosition);
-    yPosition += 10;
-    doc.setFont("helvetica", "normal");
-
-    Object.keys(sectionQuestions).forEach((sectionId) => {
-      Object.keys(sectionQuestions[sectionId]).forEach((topicName) => {
-        doc.text(`- ${topicName}`, 20, yPosition);
-        yPosition += 8;
-      });
-    });
-
-    yPosition += 10;
-    doc.line(10, yPosition, pageWidth - 10, yPosition);
-    yPosition += 10;
-
-    let questionNumber = 1;
-    Object.keys(sectionQuestions).forEach((sectionId) => {
-      Object.keys(sectionQuestions[sectionId]).forEach((topicName) => {
-        Object.values(sectionQuestions[sectionId][topicName]).forEach(
-          (question) => {
-            const splitText = doc.splitTextToSize(
-              question.English,
-              pageWidth - 30
-            );
-
-            doc.setFont("helvetica", "bold");
-            doc.text(`${questionNumber})`, 15, yPosition);
-            doc.text(splitText, 25, yPosition);
-
-            yPosition += splitText.length * 7;
-
-            question.OptionsEnglish?.split("\\\\").forEach((opt, idx) => {
-              const wrappedOption = doc.splitTextToSize(
-                `${idx + 1}) ${opt.trim()}`,
-                pageWidth - 30
-              );
-              doc.text(wrappedOption, 30, yPosition);
-              yPosition += wrappedOption.length * 7;
-            });
-
-            yPosition += 10;
-            doc.line(10, yPosition, pageWidth - 10, yPosition);
-            yPosition += 10;
-            questionNumber++;
-
-            if (yPosition > 270) {
-              doc.addPage();
-              yPosition = 20;
-            }
-          }
-        );
-      });
-    });
-
-    doc.autoPrint();
-    window.open(doc.output("bloburl"), "_blank");
-  };
-
-  const downloadQuestionPaper = async () => {
-    if (!activeSection) return;
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    let yPosition = 20;
-
-    const centerText = (text, y) => {
-      const textWidth = doc.getTextWidth(text);
-      doc.text(text, (pageWidth - textWidth) / 2, y);
-    };
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    centerText("DEMO ACCOUNT", yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(14);
-    centerText("Test123", yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(12);
-    centerText(`Date: ${new Date().toLocaleDateString()}`, yPosition);
-    yPosition += 20;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Topics Covered:", 15, yPosition);
-    yPosition += 10;
-    doc.setFont("helvetica", "normal");
-
-    Object.keys(sectionQuestions[activeSection]).forEach((topicName) => {
-      doc.text(`- ${topicName}`, 20, yPosition);
-      yPosition += 8;
-    });
-
-    yPosition += 10;
-    doc.line(10, yPosition, pageWidth - 10, yPosition);
-    yPosition += 10;
-
-    let questionNumber = 1;
-    Object.keys(sectionQuestions[activeSection]).forEach((topicName) => {
-      Object.values(sectionQuestions[activeSection][topicName]).forEach(
-        (question) => {
-          const splitText = doc.splitTextToSize(
-            question.English,
-            pageWidth - 30
-          );
-
-          doc.setFont("helvetica", "bold");
-          doc.text(`${questionNumber})`, 15, yPosition);
-          doc.text(splitText, 25, yPosition);
-
-          yPosition += splitText.length * 7;
-
-          question.OptionsEnglish?.split("\\\\").forEach((opt, idx) => {
-            const wrappedOption = doc.splitTextToSize(
-              `${idx + 1}) ${opt.trim()}`,
-              pageWidth - 30
-            );
-            doc.text(wrappedOption, 30, yPosition);
-            yPosition += wrappedOption.length * 7;
-          });
-
-          yPosition += 10;
-          doc.line(10, yPosition, pageWidth - 10, yPosition);
-          yPosition += 10;
-          questionNumber++;
-
-          if (yPosition > 270) {
-            doc.addPage();
-            yPosition = 20;
-          }
-        }
-      );
-    });
-
-    doc.save("Question_Paper.pdf");
+  const cleanLatexString = (latexString) => {
+    return latexString
+      .replace(/\\\\/g, " ")
+      .replace(/\$([^$]+)\$/g, "\\($1\\)")
+      .replace(/\n/g, "\\\\");
   };
 
   const config = {
@@ -309,40 +161,59 @@ const ReviewPage = () => {
           </div>
         </div>
         <div ref={printRef} className="mt-4">
-  {activeSection && sectionQuestions[activeSection] ? (
-    Object.keys(sectionQuestions[activeSection].pickedTopics).map((topicName) => {
-      let questionNumber = 1; 
+          {activeSection && sectionQuestions[activeSection] ? (
+            Object.keys(sectionQuestions[activeSection].pickedTopics).map(
+              (topicName) => {
+                let questionNumber = 1;
 
-      return sectionQuestions[activeSection].pickedTopics[topicName].map(
-        (question) => {
-          return (
-            <div
-              key={question._id}
-              className="mt-2 p-2 border rounded-md bg-white"
-            >
-              <p className="font-medium text-gray-800 mb-1">
-               {question.English} 
-              </p>
+                return sectionQuestions[activeSection].pickedTopics[
+                  topicName
+                ].map((question) => {
+                  return (
+                    <div
+                      key={question._id}
+                      className="mt-2 p-2 border rounded-md bg-white"
+                    >
+                      <MathJax
+                        inline
+                        style={{ fontSize: "16px", marginBottom: "10px" }}
+                      >
+                        {`${cleanLatexString(question.English)}`}
+                      </MathJax>
 
-              {question.OptionsEnglish?.split("\\\\").map((opt, idx) => (
-                <p key={idx} className="text-sm text-gray-600 ml-4">
-                  {`${opt.trim()}`}
-                </p>
-              ))}
-            </div>
-          );
-        }
-      );
-    })
-  ) : (
-    <p className="text-gray-600 mt-4">
-      No questions found for this section.
-    </p>
-  )}
-</div>
-
-
-
+                       <ul className="mt-2 space-y-1">
+                                    {question.OptionsEnglish.split("\\\\")
+                                      .filter((option) => option.trim() !== "")
+                                      .map((option, index) => {
+                                        const correctAnswers =
+                                          question.Answer.split("&").map(Number);
+                                        const isCorrect = correctAnswers.includes(index + 1);
+                  
+                                        const cleanOption = cleanLatexString(option.trim());
+                  
+                                        return (
+                                          <li
+                                            key={index}
+                                            className={`mt-1 text-sm flex items-center ${
+                                              isCorrect ? "text-green-600 font-bold" : ""
+                                            }`}
+                                          >
+                                            <MathJax inline>{`${cleanOption}`}</MathJax>
+                                          </li>
+                                        );
+                                      })}
+                                  </ul>
+                    </div>
+                  );
+                });
+              }
+            )
+          ) : (
+            <p className="text-gray-600 mt-4">
+              No questions found for this section.
+            </p>
+          )}
+        </div>
 
         <div className="mt-4 sticky bottom-0 bg-white p-3 shadow-md flex flex-wrap justify-center gap-4">
           <button

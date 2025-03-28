@@ -105,7 +105,7 @@ const TCreation = () => {
   );
 
   const [testStatus, setTestStatus] = useState(
-    filteredAssignments.reduce((acc, assignment) => {
+    filteredAssignments?.reduce((acc, assignment) => {
       acc[assignment._id] = false; // Default to 'Offline'
       return acc;
     }, {})
@@ -181,8 +181,8 @@ const TCreation = () => {
           </thead>
 
           <tbody>
-            {filteredAssignments.length > 0 ? (
-              filteredAssignments.map((assignment, index) => (
+            {filteredAssignments?.length > 0 ? (
+              filteredAssignments?.map((assignment, index) => (
                 <tr
                   key={assignment._id}  
                   className="border-t hover:bg-gray-50 transition-all"

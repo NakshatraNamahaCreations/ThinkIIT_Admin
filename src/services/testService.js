@@ -252,6 +252,33 @@ const testServices = {
     }
   },
 
+  getSelectedTopics: async (testId, payload) => {
+    try {
+      const response = await axios.get(
+        `${config.BASE_URL_TEST}newTest/${testId}/get-topics`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error saving selected topics:", error);
+      return { success: false, message: "Failed to save topics" };
+    }
+  },
+
+  removeTopic: async (testId, sectionId, topicData) => {
+    try {
+      const response = await axios.put(
+        `${config.BASE_URL_TEST}newTest/${testId}/sections/${sectionId}/remove-topic`,
+        topicData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error removing topic:", error);
+      return { success: false, message: "Failed to remove topic" };
+    }
+  },
+  
+
   GetQuestionByQid: async (id, mode) => {
     try {
       const response = await axios.post(

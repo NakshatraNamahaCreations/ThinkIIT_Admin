@@ -13,12 +13,19 @@ const DefineSyllabus = () => {
   const [isAllSectionsComplete, setIsAllSectionsComplete] = useState(false);
   const [questionSelectionType, setQuestionSelectionType] = useState("");
   const navigate = useNavigate();
+  const [hasUserModifiedTopics, setHasUserModifiedTopics] = useState(false);
+
 
   useEffect(() => {
     if (id) {
       fetchTestDataById(id);
+   
     }
+
   }, [id]);
+  useEffect(() =>{
+    fetchTestSectionById(id);
+  },[])
   useEffect(() => {
     const allSectionsComplete = savedSections.every((section) => {
       const sectionTopics = selectedTopics[section._id];
@@ -30,6 +37,47 @@ const DefineSyllabus = () => {
 
     setIsAllSectionsComplete(allSectionsComplete);
   }, [selectedTopics, savedSections]);
+
+  const fetchTestSectionById = async (testId) => {
+    try {
+      const response = await testServices.getSelectedTopics(testId);
+      if (response.success) {
+        setSavedSections(response.sections);
+  
+        const preSelectedTopics = {};
+  
+        response.sections.forEach((section) => {
+          if (section.topic && section.topic.length > 0) {
+            const groupedByChapter = {};
+  
+            section.topic.forEach((topic) => {
+              const chapterId = topic.chapterId;
+              if (!groupedByChapter[chapterId]) {
+                groupedByChapter[chapterId] = [];
+              }
+              groupedByChapter[chapterId].push({
+                topicName: topic.topicName,
+                numberOfQuestions: topic.numberOfQuestions,
+                chapterId: topic.chapterId,
+              });
+            });
+  
+            preSelectedTopics[section._id] = groupedByChapter;
+          }
+        });
+  
+        setSelectedTopics(preSelectedTopics);
+        sessionStorage.setItem("selectedTopics", JSON.stringify(preSelectedTopics));
+      } else {
+        toast.error("Failed to fetch test sections");
+      }
+    } catch (error) {
+      console.error("Error fetching test sections:", error);
+      toast.error("Something went wrong while fetching sections");
+    }
+  };
+  
+  
 
   const fetchTestDataById = async (id) => {
     try {
@@ -136,23 +184,41 @@ const DefineSyllabus = () => {
     }
   };
 
-  const toggleTopic = (chapterId, topic) => {
+  const toggleTopic = async (chapterId, topic) => {
+    const isAlreadySelected = selectedTopics[activeSection]?.[chapterId]?.some(
+      (t) => t.topicName === topic.topicName
+    );
+  
     setSelectedTopics((prev) => {
-      const updatedTopics = {
-        ...prev,
-        [activeSection]: {
-          ...prev[activeSection],
-          [chapterId]: prev[activeSection]?.[chapterId]?.includes(topic)
-            ? prev[activeSection][chapterId].filter((t) => t !== topic)
-            : [...(prev[activeSection]?.[chapterId] || []), topic],
-        },
+      const updatedChapterTopics = isAlreadySelected
+        ? prev[activeSection][chapterId].filter(
+            (t) => t.topicName !== topic.topicName
+          )
+        : [...(prev[activeSection]?.[chapterId] || []), topic];
+  
+      const updatedSection = {
+        ...prev[activeSection],
+        [chapterId]: updatedChapterTopics,
       };
   
-      // Persist selected topics in sessionStorage
-      sessionStorage.setItem("selectedTopics", JSON.stringify(updatedTopics));
-  
-      return updatedTopics;
+      const updated = {
+        ...prev,
+        [activeSection]: updatedSection,
+      };
+  setHasUserModifiedTopics(true);
+      sessionStorage.setItem("selectedTopics", JSON.stringify(updated));
+      return updated;
     });
+  
+    if (isAlreadySelected) {
+      const sectionId = activeSection;
+      const testId = id;
+  
+      await testServices.removeTopic(testId, sectionId, {
+        topicName: topic.topicName,
+        chapterId: topic.chapterId,
+      });
+    }
   };
   
 
@@ -246,7 +312,7 @@ const DefineSyllabus = () => {
           topics: formattedTopics,
           questionSelection: selectionType,
         };
-  
+ 
         const res = await testServices.defineChapterAndTopics(id, sectionId, formData);
         if (!res.success) {
           toast.error(`Failed to save syllabus for ${sectionDetails.subject}`);
@@ -262,10 +328,6 @@ const DefineSyllabus = () => {
     }
   };
   
-  useEffect(() => {
-    console.log("the active check",activeSection);
-    
-  })
 
   return (
     <div className=" mx-auto p-6 bg-gray-100 min-h-screen">
@@ -306,8 +368,8 @@ const DefineSyllabus = () => {
                   onClick={() => toggleTopic(chapter._id, topic)}
                   style={{ fontSize: "12px" }}
                   className={`px-2 py-1.5 border rounded-md text-xs font-medium transition-all  ${
-                    selectedTopics[activeSection]?.[chapter._id]?.includes(
-                      topic
+                    selectedTopics[activeSection]?.[chapter._id]?.some(
+                      (t) => t.topicName === topic.topicName
                     )
                       ? "bg-indigo-600 text-white"
                       : "bg-gray-200 text-gray-800 hover:bg-gray-300"
@@ -325,36 +387,44 @@ const DefineSyllabus = () => {
 
       {/* Submit Button */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-6">
-        <button
-          onClick={() => handleSubmit("Manual")}
-          className={`flex items-center gap-2 ${
-            questionSelectionType === "Manual"
-              ? "bg-indigo-700"
-              : "bg-indigo-300 hover:bg-indigo-700"
-          } text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md transition-all`}
-        >
-          Manually Pick Questions
-        </button>
+  {hasUserModifiedTopics ? (
+    <>
+      <button
+        onClick={() => handleSubmit("Manual")}
+        className={`flex items-center gap-2 ${
+          questionSelectionType === "Manual"
+            ? "bg-indigo-700"
+            : "bg-indigo-300 hover:bg-indigo-700"
+        } text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md transition-all`}
+      >
+        Manually Pick Questions
+      </button>
 
-        <button
-  onClick={() => handleSubmit("Auto")}
-          className={`flex items-center gap-2 ${
-            questionSelectionType === "Auto"
-              ? "bg-indigo-600"
-              : "bg-indigo-300 hover:bg-indigo-600"
-          } text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md transition-all`}
-        >
-          Auto Pick Questions
-        </button>
+      <button
+        onClick={() => handleSubmit("Auto")}
+        className={`flex items-center gap-2 ${
+          questionSelectionType === "Auto"
+            ? "bg-indigo-600"
+            : "bg-indigo-300 hover:bg-indigo-600"
+        } text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md transition-all`}
+      >
+        Auto Pick Questions
+      </button>
+    </>
+  ) : (
+    <button
+      onClick={() =>
+        navigate(`/question-selection/${id}`, {
+          state: { selectedTopics, selectionType: questionSelectionType },
+        })
+      }
+      className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md hover:bg-green-700 transition-all"
+    >
+      Next
+    </button>
+  )}
+</div>
 
-        {/* <button
-          
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-lg font-semibold shadow-md hover:bg-green-700 transition-all disabled:opacity-50"
-          disabled={!isAllSectionsComplete || !questionSelectionType}
-        >
-          Save and Next
-        </button> */}
-      </div>
     </div>
   );
 };

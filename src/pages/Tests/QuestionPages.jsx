@@ -207,9 +207,7 @@ const QuestionPages = () => {
     const sectionId = selectedSection._id;
     const trimmedTopicName = topicName.trim();
     const sectionMaxQuestions = selectedSection.numberOfQuestions;
-    // const topicMaxQuestions = selectedSection.topic.find(
-    //   (topic) => topic.topicName === trimmedTopicName
-    // )?.numberOfQuestions;
+ 
     const topicMaxQuestions = selectedSection.topic.find(
       (item) => item.topicName === trimmedTopicName
     )?.numberOfQuestions;
@@ -237,9 +235,13 @@ const QuestionPages = () => {
         [sectionId]: updatedSection,
       };
 
-      const selectedQuestionCount = Object.keys(
-        updatedSection[trimmedTopicName]
-      ).length;
+      // const selectedQuestionCount = Object.keys(
+      //   updatedSection[trimmedTopicName]
+      // ).length;
+
+      const selectedQuestionCount = Object.values(updatedSection)
+  .reduce((acc, topicMap) => acc + Object.keys(topicMap).length, 0);
+
 
       if (selectedQuestionCount > topicMaxQuestions) {
         alert(
@@ -352,7 +354,7 @@ const QuestionPages = () => {
 
           // Get full questions from filteredQuestions (or all available questions if needed)
           const fullQuestions = (sectionWiseQuestions[sectionId] || [])
-            .filter((q) => questionIds.includes(q._id))
+            ?.filter((q) => questionIds.includes(q._id))
             .map((q) => ({
               _id: q._id,
               English: q.English,
@@ -538,9 +540,12 @@ const QuestionPages = () => {
             return (
               <div
                 key={question._id}
-                className={`mt-3 m-3 p-3 border rounded-md shadow-sm transition-all relative ${
+                className={`mt-3 m-3 p-3 border rounded-md shadow-sm transition-all relative cursor-pointer ${
                   isPicked ? "bg-green-100 border-green-400" : "bg-white"
                 }`}
+                onClick={() =>
+                  togglePickQuestion(question._id, question.Topic)
+                }
               >
                 <div className="flex align-center ">
                   {question.AppearedIn !== "" && (
@@ -549,18 +554,16 @@ const QuestionPages = () => {
                     </div>
                   )}
 
-                  <button
+                  {/* <button
                     className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
                       isPicked
                         ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                     }`}
-                    onClick={() =>
-                      togglePickQuestion(question._id, question.Topic)
-                    }
+              
                   >
                     {isPicked ? "Remove" : "Pick"}
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Question Text + Image */}

@@ -17,8 +17,8 @@ const testServices = {
   deleteTest: async (payload) => {
     try {
       const response = await axios.delete(
-        `${config.BASE_URL_TEST}newTest/delete`, 
-        { data: payload } 
+        `${config.BASE_URL_TEST}newTest/delete`,
+        { data: payload }
       );
       return response.data;
     } catch (error) {
@@ -26,7 +26,7 @@ const testServices = {
       return { success: false, message: "Failed to delete test" };
     }
   },
-  
+
   addSectionDetail: async (id, formData) => {
     try {
       const response = await axios.post(
@@ -68,7 +68,6 @@ const testServices = {
   },
 
   getTestById: async (id) => {
-    
     try {
       const response = await axios.get(`${config.BASE_URL_TEST}newTest/${id}`);
       return response.data;
@@ -77,6 +76,19 @@ const testServices = {
       return { success: false, message: "Failed to fetch test details" };
     }
   },
+  addManualQuestionIds: async (testId, payload) => {
+    try {
+      const response = await axios.post(
+        `${config.BASE_URL_TEST}newTest/${testId}/add-question-ids`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching test by ID:", error);
+      return { success: false, message: "Failed to fetch test details" };
+    }
+  },
+
   // addQuestionsToSection: async (testId, questionData) => {
   //   try {
   //     const response = await axios.post(
@@ -277,9 +289,8 @@ const testServices = {
       return { success: false, message: "Failed to remove topic" };
     }
   },
-  
 
-  GetQuestionByQid: async (id, mode) => {
+  GetQuestionByQid: async (mode) => {
     try {
       const response = await axios.post(
         `${config.BASE_URL_QUESTIONS}QB/getByIds`,
@@ -292,24 +303,35 @@ const testServices = {
     }
   },
 
-  updateTestMode:  async (testId, testMode, testDuration) => {
+  getPickedQuestionByTestId: async (testId) => {
+    try {
+      const response = await axios.get(
+        `${config.BASE_URL_TEST}newTest/getPickedQuestions/${testId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating sections:", error);
+      return { success: false, message: "Failed to create assignment" };
+    }
+  },
+
+  updateTestMode: async (testId, testMode, testDuration) => {
     try {
       const payload = {
         testMode,
-        testDuration
+        testDuration,
       };
-  
+
       const response = await axios.put(
         `${config.BASE_URL_TEST}newTest/${testId}/updateTestMode`,
         payload
       );
-  
+
       return response.data;
     } catch (error) {
       console.error("Error updating test mode:", error);
       return { success: false, message: "Failed to update test mode" };
     }
-  }
+  },
 };
 
 export default testServices;

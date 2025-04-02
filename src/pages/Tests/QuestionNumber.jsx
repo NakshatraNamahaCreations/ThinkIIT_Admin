@@ -19,13 +19,39 @@ const QuestionNumber = () => {
   useEffect(() => {
     fetchTestDataById(id);
   }, [id]);
-
+  
   const fetchTestDataById = async (id) => {
     try {
       const data = await testServices.getTestById(id);
       if (data?.data?.sections) {
         setSavedSections(data.data.sections);
         setActiveSection(data.data.sections[0]?._id || "");
+  
+        // Initialize selectedTopics and sectionTotals with numberOfQuestions
+        const initialSelectedTopics = {};
+        const initialSectionTotals = {};
+  
+        data.data.sections.forEach((section) => {
+          initialSectionTotals[section._id] = 0; // Initialize section total to 0
+  
+          section.topic.forEach((topic) => {
+            if (!initialSelectedTopics[section._id]) {
+              initialSelectedTopics[section._id] = {};
+            }
+            initialSelectedTopics[section._id][topic.topicName] = {
+              topicName: topic.topicName,
+              numberOfQuestions: topic.numberOfQuestions || 0, // Set number of questions if available
+              chapterId: topic.chapterId,
+            };
+  
+            // Initialize section total with predefined number of questions
+            initialSectionTotals[section._id] += topic.numberOfQuestions || 0;
+          });
+        });
+  
+        // Set the state values
+        setSelectedTopics(initialSelectedTopics);
+        setSectionTotals(initialSectionTotals); // Set initial section totals
       } else {
         setSavedSections([]);
         toast.error("No sections found.");
@@ -34,6 +60,8 @@ const QuestionNumber = () => {
       toast.error("Failed to fetch test details.");
     }
   };
+  
+  
 
   // const handleQuestionChange = (sectionId, topicName, value, chapterId) => {
   //   const num = parseInt(value, 10) || 0;
@@ -126,7 +154,11 @@ const QuestionNumber = () => {
       );
       return;
     }
-  
+    sessionStorage.removeItem("AutoPickedQuestions");
+    sessionStorage.removeItem("pickedQuestions");
+    localStorage.removeItem("pickedQuestions");
+    localStorage.removeItem("ManualPick");
+    localStorage.removeItem("pickedQuestions");
     try {
       for (const section of savedSections) {
         const sectionId = section._id;
@@ -141,24 +173,14 @@ const QuestionNumber = () => {
             chapterId: topicData.chapterId,
           })
         );
-
-        console.log();
-        
-  
-        console.log("the format", sectionTotals[sectionId]);
   
         // If AutoPick is selected, trigger Auto Pick API
         if (selectionType === "Auto") {
-          console.log("Auto Pick Payload", {
-            sectionId,
-            topics: formattedTopic,
-            totalQuestions: sectionTotals[sectionId], // Make sure it's using sectionTotals for each section
-          });
   
           const autoPickResponse = await testServices.AutoPickQuestions(id, {
             sectionId,
             topics: formattedTopic,
-            totalQuestions: sectionTotals[sectionId], // Pass the total questions dynamically
+            totalQuestions: sectionTotals[sectionId],
           });
   
           if (!autoPickResponse.success) {

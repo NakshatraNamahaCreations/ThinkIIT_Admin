@@ -5,6 +5,8 @@ import { jsPDF } from "jspdf";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
 import testServices from "../../services/testService";
 import { toast } from "react-toastify";
+import { formatMathJaxContent } from "../../utils/helper";
+import { Box } from "@mui/material";
 
 const ReviewPage = () => {
   const navigate = useNavigate();
@@ -48,6 +50,7 @@ const ReviewPage = () => {
 
         if (response.success) {
           console.log(`Saved questions for section ${sectionId}`);
+          navigate("/TCreation");
         } else {
           console.error(
             `Failed to save section ${sectionId}:`,
@@ -58,13 +61,14 @@ const ReviewPage = () => {
       }
 
       toast.success("All questions saved to DB successfully!");
-      navigate("/TCreation");
+
       sessionStorage.removeItem("AutoPickedQuestions");
       sessionStorage.removeItem("pickedQuestions");
       sessionStorage.removeItem("pickedQuestions");
       sessionStorage.removeItem("questionDetails");
       sessionStorage.removeItem("selectionType");
       localStorage.removeItem("AutoPickedQuestions");
+      localStorage.removeItem("ManualPick");
       localStorage.removeItem("pickedQuestions");
     } catch (error) {
       console.error("Error submitting questions:", error);
@@ -169,6 +173,16 @@ const ReviewPage = () => {
                 return sectionQuestions[activeSection].pickedTopics[
                   topicName
                 ].map((question) => {
+                  const imageMatch = question.English?.match(
+                    /\\includegraphics\[.*?\]{(.*?)}/
+                  );
+                  const imageId = imageMatch ? imageMatch[1] : null;
+                  const cleanQuestion = question.English?.replace(
+                    /\\\\/g,
+                    " \\[ \n \\] "
+                  )
+                    .replace(/\\includegraphics\[.*?\]{.*?}/g, "")
+                    .trim();
                   return (
                     <div
                       key={question._id}
@@ -178,31 +192,47 @@ const ReviewPage = () => {
                         inline
                         style={{ fontSize: "16px", marginBottom: "10px" }}
                       >
-                        {`${cleanLatexString(question.English)}`}
+                        {`${formatMathJaxContent(question.English)}`}
                       </MathJax>
+                      <Box sx={{display:'flex', justifyContent:'end'}}>
+                      {imageId && question.Images && question.Images[imageId] ? (
+  <img
+    src={`data:image/jpeg;base64,${question.Images[imageId]}`}
+    alt="Question Diagram"
+    className="w-[250px] h-[200px] border rounded-lg shadow-sm"
+  />
+) : (
+  console.warn(`Missing image for ID: ${imageId}`)
+)}
 
-                       <ul className="mt-2 space-y-1">
-                                    {question.OptionsEnglish.split("\\\\")
-                                      .filter((option) => option.trim() !== "")
-                                      .map((option, index) => {
-                                        const correctAnswers =
-                                          question.Answer.split("&").map(Number);
-                                        const isCorrect = correctAnswers.includes(index + 1);
-                  
-                                        const cleanOption = cleanLatexString(option.trim());
-                  
-                                        return (
-                                          <li
-                                            key={index}
-                                            className={`mt-1 text-sm flex items-center ${
-                                              isCorrect ? "text-green-600 font-bold" : ""
-                                            }`}
-                                          >
-                                            <MathJax inline>{`${cleanOption}`}</MathJax>
-                                          </li>
-                                        );
-                                      })}
-                                  </ul>
+                        {console.log(imageId)
+                        }
+                      </Box>
+           
+                      <ul className="mt-2 space-y-1">
+                        {question.OptionsEnglish.split("\\\\")
+                          .filter((option) => option.trim() !== "")
+                          .map((option, index) => {
+                            const correctAnswers =
+                              question.Answer.split("&").map(Number);
+                            const isCorrect = correctAnswers.includes(
+                              index + 1
+                            );
+
+                            const cleanOption = cleanLatexString(option.trim());
+
+                            return (
+                              <li
+                                key={index}
+                                className={`mt-1 text-sm flex items-center ${
+                                  isCorrect ? "text-green-600 font-bold" : ""
+                                }`}
+                              >
+                                <MathJax inline>{`${cleanOption}`}</MathJax>
+                              </li>
+                            );
+                          })}
+                      </ul>
                     </div>
                   );
                 });

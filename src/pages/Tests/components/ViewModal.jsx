@@ -13,6 +13,7 @@ import testServices from "../../../services/testService";
 import jsPDF from "jspdf";
 import { Badge } from "react-bootstrap";
 import { MathJax, MathJaxContext } from "better-react-mathjax";
+import { formatMathJaxContent } from "../../../utils/helper";
 
 
 const ViewModal = ({ open, onClose, testId }) => {
@@ -92,7 +93,9 @@ const ViewModal = ({ open, onClose, testId }) => {
         await Promise.all(
           response.data.sections.map(async (section) => {
             if (section.questionBankQuestionId.length > 0) {
-              const res = await testServices.GetQuestionByQid(null, {
+              console.log("the section",section.questionBankQuestionId);
+              
+              const res = await testServices.GetQuestionByQid( {
                 questionIds: section.questionBankQuestionId,
               });
               questionsData[section._id] = res.questions;
@@ -358,7 +361,7 @@ const ViewModal = ({ open, onClose, testId }) => {
                   <MathJax
                         style={{ fontSize: "16px", marginBottom: "10px" }}
                       >
-                       {`${cleanLatexString(q.English)}`}
+                       {`${formatMathJaxContent(q.English)}`}
                       </MathJax>
                   </Typography>
                   <ul className="mt-2 space-y-1">
@@ -369,7 +372,8 @@ const ViewModal = ({ open, onClose, testId }) => {
                         q.Answer.split("&").map(Number);
                       const isCorrect = correctAnswers.includes(index + 1);
 
-                      const cleanOption = cleanLatexString(option.trim());
+                      const cleanOption = formatMathJaxContent(option.trim());
+                      
 
                       return (
                         <li

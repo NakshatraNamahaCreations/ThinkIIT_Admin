@@ -28,8 +28,8 @@ const QuestionForms = () => {
     const storedSections = sessionStorage.getItem("savedSections");
     return storedSections ? JSON.parse(storedSections) : [];
   });
-  const [errorModalOpen, setErrorModalOpen] = useState(false);  
-  const [errorMessage, setErrorMessage] = useState("");  
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -96,7 +96,7 @@ const QuestionForms = () => {
       setFormData((prev) => ({
         ...prev,
         subject: value,
-        subjectId: selectedSubject ? selectedSubject._id : "", 
+        subjectId: selectedSubject ? selectedSubject._id : "",
       }));
     } else {
       setFormData((prev) => ({
@@ -106,17 +106,36 @@ const QuestionForms = () => {
     }
   };
 
-  const handleSubmit = () => {
-    if (savedSections?.length > 0) {
-   
-      navigate(`/define-syllabus/${id}`);
-    } else {
+  const handleSubmit = async () => {
+    if (!savedSections || savedSections.length === 0) {
       toast.error("Please create at least one section before proceeding.");
+      return;
+    }
+  
+    try {
+      const response = await testServices.getSelectedTopics(id);
+      if (response.success && response.sections.length > 0) {
+        const allSectionsHaveTopics = response.sections.every(section => 
+          section.topic && section.topic.length > 0 && 
+          section.chapter && section.chapter.length > 0
+        );
+  
+        if (allSectionsHaveTopics) {
+          navigate(`/questionPage/${id}`);
+        } else {
+          navigate(`/define-syllabus/${id}`);
+        }
+      } else {
+        navigate(`/define-syllabus/${id}`);
+      }
+    } catch (error) {
+      console.error("Error checking selected topics:", error);
+      toast.error("Something went wrong while checking topics.");
     }
   };
+  
 
   const handleSaveSection = async () => {
-  
     if (
       !formData.marksPerQuestion ||
       !formData.numberOfQuestions ||
@@ -126,29 +145,31 @@ const QuestionForms = () => {
       toast.error("Please fill all required fields.");
       return;
     }
-  
-   
+
     const negativeMarking = parseFloat(formData.negativeMarksPerWrongAnswer);
     const marks = parseInt(formData.marksPerQuestion, 10);
-  
-  
+
     if (negativeMarking > 0) {
       setErrorMessage("Negative marking cannot be a positive number.");
       setErrorModalOpen(true);
       return;
     }
     if (formData.minQuestionsAnswerable > formData.numberOfQuestions) {
-      setErrorMessage("Minimum number of question cannot be more than the number of questions");
+      setErrorMessage(
+        "Minimum number of question cannot be more than the number of questions"
+      );
       setErrorModalOpen(true);
       return;
     }
     console.log("The mini", formData.minQuestionsAnswerable);
-    
+
     if (negativeMarking < 0 && Math.abs(negativeMarking) > marks) {
-      toast.error("Negative marking cannot be greater than the marks per question.");
+      toast.error(
+        "Negative marking cannot be greater than the marks per question."
+      );
       return;
     }
-  
+
     const payload = {
       subject: formData.subject,
       subjectId: formData.subjectId,
@@ -157,33 +178,30 @@ const QuestionForms = () => {
       marksPerQuestion: marks,
       minQuestionsAnswerable: parseInt(formData.minQuestionsAnswerable, 10),
       negativeMarksPerWrongAnswer: negativeMarking,
-      
     };
-  
-    let updatedSections = Array.isArray(savedSections) ? [...savedSections] : [];
-  
+
+    let updatedSections = Array.isArray(savedSections)
+      ? [...savedSections]
+      : [];
+
     try {
       if (editIndex !== null) {
- 
         const sectionId = savedSections[editIndex]._id;
         await testServices.editSection(id, sectionId, payload);
-  
+
         updatedSections[editIndex] = { ...formData, _id: sectionId };
         setSavedSections(updatedSections);
         setEditIndex(null);
         toast.success("Section updated successfully!");
       } else {
-  
         const newSection = await testServices.addSectionDetail(id, payload);
         updatedSections.push({ ...formData, _id: newSection._id });
         toast.success("Section saved successfully!");
       }
-  
- 
+
       setSavedSections(updatedSections);
       sessionStorage.setItem("savedSections", JSON.stringify(updatedSections));
-  
-      
+
       setFormData({
         sectionName: "",
         subject: "",
@@ -198,7 +216,7 @@ const QuestionForms = () => {
       console.error("Save Error:", error);
     }
   };
-  
+
   const handleModalClose = () => {
     setErrorModalOpen(false);
   };
@@ -213,8 +231,8 @@ const QuestionForms = () => {
       minQuestionsAnswerable: "",
       numberOfQuestions: "",
     });
-  }
-  
+  };
+
   const handleEditSection = (index) => {
     const selectedSection = savedSections[index];
 
@@ -222,20 +240,19 @@ const QuestionForms = () => {
       console.error("Section not found at index:", index);
       return;
     }
-console.log(selectedSection);
+    console.log(selectedSection);
 
     setFormData({
       sectionName: selectedSection?.sectionName || "",
       subject: selectedSection?.subject || "",
       questionType: selectedSection?.questionType || "MCQ",
-      numberOfQuestions:  selectedSection?.numberOfQuestions,
+      numberOfQuestions: selectedSection?.numberOfQuestions,
       marksPerQuestion: selectedSection?.marksPerQuestion,
 
-      negativeMarksPerWrongAnswer:  selectedSection?.negativeMarksPerWrongAnswer ,
+      negativeMarksPerWrongAnswer: selectedSection?.negativeMarksPerWrongAnswer,
       minQuestionsAnswerable: selectedSection?.minQuestionsAnswerable,
       selectionType: "Auto",
-      subjectId: selectedSection?.subjectId
-    
+      subjectId: selectedSection?.subjectId,
     });
 
     setEditIndex(index);
@@ -308,7 +325,6 @@ console.log(selectedSection);
               />
             </div>
             {/* Minimum answarable */}
-           
 
             {/* Negative Marking */}
             <div>
@@ -415,60 +431,60 @@ console.log(selectedSection);
         )}
       </div>
       <Modal
-  open={errorModalOpen}
-  onClose={handleModalClose}
-  aria-labelledby="error-modal"
-  aria-describedby="error-modal-description"
->
-  <div
-    style={{
-      width: "50%",
-      maxWidth: "500px",
-      margin: "10rem auto",
-      padding: "20px",
-      backgroundColor: "white",
-      borderRadius: "8px",
-      textAlign: "center",
-      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    }}
-  >
-        <div className="flex items-center justify-center mb-4">
-      <span className="text-red-600 text-3xl font-bold">!</span>
-    </div>
-    <h2
-      id="error-modal"
-      style={{
-        fontSize: "1.5rem",
-        fontWeight: "bold",
-        color: "#f44336", // Red color for the title
-      }}
-    >
-      Error
-    </h2>
-    <p
-      id="error-modal-description"
-      style={{
-        fontSize: "1rem",
-        marginBottom: "20px",
-      }}
-    >
-      {errorMessage}
-    </p>
-    <Button
-      onClick={handleModalClose}
-      style={{
-        backgroundColor: "#f44336", // Red color for the button
-        color: "white",
-        padding: "10px 20px",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-      }}
-    >
-      OK
-    </Button>
-  </div>
-</Modal>
+        open={errorModalOpen}
+        onClose={handleModalClose}
+        aria-labelledby="error-modal"
+        aria-describedby="error-modal-description"
+      >
+        <div
+          style={{
+            width: "50%",
+            maxWidth: "500px",
+            margin: "10rem auto",
+            padding: "20px",
+            backgroundColor: "white",
+            borderRadius: "8px",
+            textAlign: "center",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-red-600 text-3xl font-bold">!</span>
+          </div>
+          <h2
+            id="error-modal"
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              color: "#f44336", // Red color for the title
+            }}
+          >
+            Error
+          </h2>
+          <p
+            id="error-modal-description"
+            style={{
+              fontSize: "1rem",
+              marginBottom: "20px",
+            }}
+          >
+            {errorMessage}
+          </p>
+          <Button
+            onClick={handleModalClose}
+            style={{
+              backgroundColor: "#f44336", // Red color for the button
+              color: "white",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            OK
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };

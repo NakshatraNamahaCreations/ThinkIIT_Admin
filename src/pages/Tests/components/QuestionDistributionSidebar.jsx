@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import testServices from "../../../services/testService";
 
@@ -10,7 +10,7 @@ const QuestionDistributionSidebar = ({
   const { id } = useParams();
   const [sections, setSections] = useState([]);
   //   const [pickedQuestions, setPickedQuestions] = useState({});
-
+  console.log("the final", pickedQuestions);
   useEffect(() => {
     fetchTestDataById(id);
   }, [id]);
@@ -54,11 +54,7 @@ const QuestionDistributionSidebar = ({
       <div className="flex-1 overflow-y-auto pr-2">
         {sections.map((section) => (
           <div key={section._id} className="mb-4">
-            <p className="text-md font-semibold text-gray-700">
-              {section.subject}
-              {console.log(section)
-              }
-            </p>
+            <p className="text-md font-semibold text-gray-700"></p>
 
             {section.chapter.length > 0 ? (
               section.chapter.map((chapter) => {
@@ -77,16 +73,21 @@ const QuestionDistributionSidebar = ({
                     {relatedTopics.length > 0 ? (
                       relatedTopics.map((topic) => {
                         const topicName = topic.topicName.trim();
+
                         const sectionId = section._id;
-                        
+
+                        // const pickedTopicMap = Object.keys(
+                        //   pickedQuestions?.[sectionId] || {}
+                        // ).find((key) => key.trim() === topicName.trim());
                         const pickedTopicMap = Object.keys(pickedQuestions?.[sectionId] || {}).find(
-                          (key) => key.trim() === topicName.trim()
+                          (key) => key.trim().toLowerCase() === topicName.trim().toLowerCase()
                         );
-                        
                         const pickedCount = pickedTopicMap
-                          ? Object.keys(pickedQuestions[sectionId][pickedTopicMap]).length
+                          ? Object.keys(
+                              pickedQuestions[sectionId][pickedTopicMap]
+                            ).length
                           : 0;
-                        
+
                         return (
                           <div
                             key={topic._id}
@@ -98,11 +99,9 @@ const QuestionDistributionSidebar = ({
                             onClick={() => onSelectTopic(section, topic)}
                           >
                             <span style={{ fontSize: "1rem" }}>
-                              {topicName.slice(0,15)}
+                              {topicName.slice(0, 15)}
                             </span>
                             <span>
-                              {console.log("the final topic",topic)
-                              }
                               {pickedCount} / {topic.numberOfQuestions}
                             </span>
                           </div>

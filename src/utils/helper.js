@@ -8,3 +8,14 @@ export function formatDate(dateString) {
     return `${day}/${month}/${year}`;
   }
   
+
+  export const formatMathJaxContent = (text) => {
+    if (!text) return "";
+  
+    return text
+      .replace(/\\includegraphics\[.*?\]{.*?}/g, "") // Remove image placeholders
+      .replace(/\\begin{center}.*?\\end{center}/gs, "") // Remove centered content
+      .replace(/\$(.*?)\$/g, (match, p1) => `\\( ${p1.replace(/\\/g, "\\")} \\)`) // Convert inline math
+      .replace(/\\\\/g, " ") // Replace double backslashes with space
+      .trim();
+  };

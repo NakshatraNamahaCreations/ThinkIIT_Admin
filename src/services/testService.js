@@ -306,7 +306,8 @@ const testServices = {
   getPickedQuestionByTestId: async (testId) => {
     try {
       const response = await axios.get(
-        `${config.BASE_URL_TEST}newTest/getPickedQuestions/${testId}`);
+        `${config.BASE_URL_TEST}newTest/getPickedQuestions/${testId}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error creating sections:", error);
@@ -331,6 +332,21 @@ const testServices = {
       console.error("Error updating test mode:", error);
       return { success: false, message: "Failed to update test mode" };
     }
+  },
+
+  uploadExcelFile: async (testId, formData) => {
+    try{
+      const response = await axios.post(
+        `${config.BASE_URL_TEST}newTest/upload-question-excel/${testId}`,
+        formData
+      );
+  
+      return response.data;
+    }
+  catch(error){
+    console.error("Error uploading file", error);
+    return { success: false, message: "Error uploading file" };
+  }
   },
 };
 

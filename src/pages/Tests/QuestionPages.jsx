@@ -601,7 +601,6 @@ const QuestionPages = () => {
         });
 
         setPickedQuestions(merged);
-        console.log("the mereged", merged);
 
         sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
         // localStorage.setItem("pickedQuestions", JSON.stringify(merged));
@@ -733,14 +732,29 @@ const QuestionPages = () => {
                       togglePickQuestion(question._id, question.Topic)
                     }
                   >
-                    <div className="flex align-center ">
-                      {question.AppearedIn !== "" && (
-                        <div className="absolute top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                          {question.AppearedIn}
-                        </div>
-                      )}
+                    <div className="flex justify-between mb-3">
+                      <div className="flex align-center ">
+                        {
+                          <div className=" top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                            Difficulty: {question.Difficulty}
+                          </div>
+                        }
+                      </div>
+                      <div className="flex align-center ">
+                        {
+                          <div className=" top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                            QID: {question.QID}
+                          </div>
+                        }
+                      </div>
+                      <div className="flex align-center ">
+                        {question.AppearedIn !== "" && (
+                          <div className=" top-3 right-30 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                            {question.AppearedIn}
+                          </div>
+                        )}
 
-                      {/* <button
+                        {/* <button
                     className={`absolute top-2 right-2 px-3 py-1 text-xs font-semibold rounded-md transition ${
                       isPicked
                         ? "bg-red-500 hover:bg-red-600 text-white"
@@ -750,8 +764,8 @@ const QuestionPages = () => {
                   >
                     {isPicked ? "Remove" : "Pick"}
                   </button> */}
+                      </div>
                     </div>
-                    
                     {/* Question Text + Image */}
                     <div className="flex justify-between items-start">
                       <div className="w-[80%]">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import { useNavigate, useParams } from "react-router-dom";
 import apiServices from "../../services/apiServices";
 import testServices from "../../services/testService";
+import { Button } from "react-bootstrap";
 
 const DefineSyllabus = () => {
   const { id } = useParams();
@@ -16,9 +18,20 @@ const DefineSyllabus = () => {
   const [hasUserModifiedTopics, setHasUserModifiedTopics] = useState(false);
   const [initialSelectedTopics, setInitialSelectedTopics] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [newQuestionSection, setNewQuestionSection] = useState([]); // now array
+  const [newQuestionSection, setNewQuestionSection] = useState([]);
 
   const [newQuestionIds, setNewQuestionIds] = useState([""]);
+
+  const sampleData = [
+    {
+      "Ticket ID": "ABC123",
+      "Product Name": "Sample Product",
+      "Issue": "Sample Issue",
+      "Description": "Sample description",
+      "Status": "Pending",
+      "Created Date": "06/03/2025"
+    }
+  ];
 
   useEffect(() => {
     if (id) {
@@ -346,7 +359,31 @@ const DefineSyllabus = () => {
       console.error("Submission Error:", error);
     }
   };
+  const handleUploadExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+  
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const res = await testServices.uploadExcelFile(id, formData);
+      if (res.success) {
+        toast.success("File uploaded and QIDs processed successfully!");
+        setShowModal(false);
+      } else {
+        toast.error("Upload failed on server.");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("Something went wrong during upload.");
+    }
+  };
+  
+  const handleDownloadExcel = () => {
 
+  }
   useEffect(() => {
     const isEqual =
       JSON.stringify(initialSelectedTopics) === JSON.stringify(selectedTopics);
@@ -431,7 +468,27 @@ const DefineSyllabus = () => {
             <div className="space-y-2">
               {newQuestionIds.map((qid, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <input
+                  <Button  className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600" onClick={handleDownloadExcel}>
+                  Sample 
+                  </Button>
+
+                  <div className="flex gap-3">
+  <Button
+    className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+    onClick={() => document.getElementById("excelUpload").click()}
+  >
+    Upload Excel
+  </Button>
+
+  <input
+    type="file"
+    accept=".xlsx, .xls"
+    onChange={handleUploadExcel}
+    id="excelUpload"
+    className="hidden"
+  />
+</div>
+                  {/* <input
                     type="text"
                     value={qid}
                     onChange={(e) => {
@@ -441,8 +498,8 @@ const DefineSyllabus = () => {
                     }}
                     className="flex-1 border px-3 py-2 rounded-md"
                     placeholder={`Question ID ${index + 1}`}
-                  />
-                  <button
+                  /> */}
+                  {/* <button
                     onClick={() => setNewQuestionIds((prev) => [...prev, ""])}
                     className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                   >
@@ -460,7 +517,7 @@ const DefineSyllabus = () => {
                     >
                       −
                     </button>
-                  )}
+                  )} */}
                 </div>
               ))}
             </div>

@@ -1,0 +1,171 @@
+ [
+    {
+      "exam": "JEE main 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics(20)", "Chemistry(20)", "Maths(20)"],
+          "questionType": "SCQ",
+          "questions": 60,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "B",
+          "subjects": ["Physics(5)", "Chemistry(5)", "Maths(5)"],
+          "questionType": "NTQ",
+          "questions": 15,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -1
+        }
+      ]
+    },
+    {
+      "exam": "NEET 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics(45)", "Chemistry(45)", "Maths(90)"],
+          "questionType": "SCQ",
+          "questions": 180,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -1
+        }
+      ]
+    },
+    {
+      "exam": "KCET_P 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics :(60)"],
+          "questionType": "SCQ",
+          "questions": 60,
+          "correctAnswerMarks": 1,
+          "negativeMarks": 0
+        }
+      ]
+    },
+    {
+      "exam": "KCET_C 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Chemistry :(60)"],
+          "questionType": "SCQ",
+          "questions": 60,
+          "correctAnswerMarks": 1,
+          "negativeMarks": 0
+        }
+      ]
+    },
+    {
+      "exam": "KCET_M 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Maths :(60)"],
+          "questionType": "SCQ",
+          "questions": 60,
+          "correctAnswerMarks": 1,
+          "negativeMarks": 0
+        }
+      ]
+    },
+    {
+      "exam": "JEE Advanced_Paper_1 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics :(8)", "Chemistry :(8)", "Maths :(8)"],
+          "questionType": "SCQ",
+          "questions": 18,
+          "correctAnswerMarks": 3,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "B",
+          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)"],
+          "questionType": "MCQ",
+          "questions": 9,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -2
+        },
+        {
+          "sectionName": "C",
+          "subjects": ["Physics :(4)", "Chemistry :(4)", "Maths :(4)"],
+          "questionType": "CMP",
+          "questions": 12,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "D",
+          "subjects": ["Physics :(5)", "Chemistry :(5)", "Maths :(5)"],
+          "questionType": "NTQ",
+          "questions": 15,
+          "correctAnswerMarks": 4,
+          "negativeMarks": 0
+        }
+      ]
+    },
+    {
+      "exam": "JEE Advanced_Paper_2 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics :(4)", "Chemistry :(4)", "Maths :(4)"],
+          "questionType": "SCQ",
+          "questions": 12,
+          "correctAnswerMarks": 3,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "B",
+          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)"],
+          "questionType": "MCQ",
+          "questions": 9,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -2
+        },
+        {
+          "sectionName": "C",
+          "subjects": ["Physics :(6)", "Chemistry :(6)", "Maths :(6)"],
+          "questionType": "CMP",
+          "questions": 18,
+          "correctAnswerMarks": 4,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "D",
+          "subjects": ["Physics :(6)", "Chemistry :(6)", "Maths :(6)"],
+          "questionType": "NTQ",
+          "questions": 18,
+          "correctAnswerMarks": 4,
+          "negativeMarks": 0
+        }
+      ]
+    },
+    {
+      "exam": "BITSAT 2025",
+      "sections": [
+        {
+          "sectionName": "A",
+          "subjects": ["Physics :(30)", "Chemistry :(30)", "Maths :(40)", "English :(10)", "MAT :(20)"],
+          "questionType": "SCQ",
+          "questions": 130,
+          "correctAnswerMarks": 3,
+          "negativeMarks": -1
+        },
+        {
+          "sectionName": "B",
+          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)", "MAT :(3)"],
+          "questionType": "SCQ",
+          "questions": 12,
+          "correctAnswerMarks": 3,
+          "negativeMarks": -1
+        }
+      ]
+    }
+  ]
+  

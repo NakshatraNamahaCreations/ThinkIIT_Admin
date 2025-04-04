@@ -61,7 +61,8 @@ import TestSchedule from "./pages/BatchCreation/TestSchedule";
 import BatchUpdate from "./pages/BatchCreation/BatchUpdate";
 import QuestionUpdate from "./pages/QUestionManagement/QuestionUpdate";
 import Results from "./pages/BatchCreation/Results";
-import TCreation from "./pages/Tests/TCreation";
+// import TCreation from "./pages/Tests/TCreation";
+import TCreation from "./pages/Test/TCreation";
 import ReviewPage from "./pages/Tests/ReviewPage";
 import DefineSyllabus from "./pages/Tests/DefineSyllabus";
 import QuestionNumber from "./pages/Tests/QuestionNumber";
@@ -165,12 +166,13 @@ const App = () => {
               <Route path="/TCreationlist" element={<TCreationlist />} /> */}
               {/* SECTION TEST CREATION  */}
               <Route path="/TCreation" element={<TCreation />} />
-              <Route path="/define-syllabus/:id" element={<DefineSyllabus />} />
+              {/* <Route path="/define-syllabus/:id" element={<DefineSyllabus />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForm />} /> */}
-              <Route path="/questionForm/:id" element={<QuestionForms />} />
+              {/* <Route path="/questionForm/:id" element={<QuestionForms />} /> */}
               {/* <Route path="/questionPage/:id" element={<QuestionsPage />} /> */}
-              <Route path="/questionPage/:id" element={<QuestionPages />} />
-              <Route path="/questionReview/:id" element={<ReviewPage />} />
+              {/* <Route path="/questionPage/:id" element={<QuestionPages />} /> */}
+              {/* <Route path="/questionReview/:id" element={<ReviewPage />} /> */}
+              {/* <Route path="/questionForm" element={< />} /> */}
               <Route
                 path="/question-selection/:id"
                 element={<QuestionNumber />}

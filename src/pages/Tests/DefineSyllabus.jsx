@@ -26,11 +26,11 @@ const DefineSyllabus = () => {
     {
       "Ticket ID": "ABC123",
       "Product Name": "Sample Product",
-      "Issue": "Sample Issue",
-      "Description": "Sample description",
-      "Status": "Pending",
-      "Created Date": "06/03/2025"
-    }
+      Issue: "Sample Issue",
+      Description: "Sample description",
+      Status: "Pending",
+      "Created Date": "06/03/2025",
+    },
   ];
 
   useEffect(() => {
@@ -362,11 +362,10 @@ const DefineSyllabus = () => {
   const handleUploadExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
-  
+
     const formData = new FormData();
     formData.append("file", file);
-  
+
     try {
       const res = await testServices.uploadExcelFile(id, formData);
       if (res.success) {
@@ -380,10 +379,8 @@ const DefineSyllabus = () => {
       toast.error("Something went wrong during upload.");
     }
   };
-  
-  const handleDownloadExcel = () => {
 
-  }
+  const handleDownloadExcel = () => {};
   useEffect(() => {
     const isEqual =
       JSON.stringify(initialSelectedTopics) === JSON.stringify(selectedTopics);
@@ -439,55 +436,63 @@ const DefineSyllabus = () => {
                 Select Sections
               </label>
               <div className="max-h-[150px] overflow-y-auto border rounded-md p-4 bg-gray-50">
-  {savedSections.map((section) => (
-    <label key={section._id} className="flex justify-center items-center mb-3 cursor-pointer transition-all duration-300 hover:bg-gray-200 p-2 rounded-md">
-      <div className="flex gap-2 align-center">
-
-      <input
-        type="checkbox"
-        value={section._id}
-        checked={newQuestionSection.includes(section._id)}
-        onChange={(e) => {
-          const sectionId = e.target.value;
-          setNewQuestionSection((prev) =>
-            e.target.checked
-              ? [...prev, sectionId]
-              : prev.filter((id) => id !== sectionId)
-          );
-        }}
-        className="mr-3 mt-1 w-5 h-5 rounded-full border-2 border-gray-400 checked:bg-blue-500 checked:border-blue-600 focus:ring-0 transition-all duration-300"
-      />
-      <span className="text-lg font-medium text-gray-800">{section.subject}</span>
-      </div>
-    </label>
-  ))}
-</div>
-
+                {savedSections.map((section) => (
+                  <label
+                    key={section._id}
+                    className="flex justify-center items-center mb-3 cursor-pointer transition-all duration-300 hover:bg-gray-200 p-2 rounded-md"
+                  >
+                    <div className="flex gap-2 align-center">
+                      <input
+                        type="checkbox"
+                        value={section._id}
+                        checked={newQuestionSection.includes(section._id)}
+                        onChange={(e) => {
+                          const sectionId = e.target.value;
+                          setNewQuestionSection((prev) =>
+                            e.target.checked
+                              ? [...prev, sectionId]
+                              : prev.filter((id) => id !== sectionId)
+                          );
+                        }}
+                        className="mr-3 mt-1 w-5 h-5 rounded-full border-2 border-gray-400 checked:bg-blue-500 checked:border-blue-600 focus:ring-0 transition-all duration-300"
+                      />
+                      <span className="text-lg font-medium text-gray-800">
+                        {section.subject}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
               {newQuestionIds.map((qid, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Button  className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600" onClick={handleDownloadExcel}>
-                  Sample 
+                  <Button
+                    className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                    onClick={handleDownloadExcel}
+                  >
+                    Sample
                   </Button>
 
                   <div className="flex gap-3">
-  <Button
-    className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-    onClick={() => document.getElementById("excelUpload").click()}
-  >
-    Upload Excel
-  </Button>
+                    <Button
+                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                      onClick={() =>
+                        document.getElementById("excelUpload").click()
+                      }
+                    >
+                      Upload Excel
+                    </Button>
 
-  <input
-    type="file"
-    accept=".xlsx, .xls"
-    onChange={handleUploadExcel}
-    id="excelUpload"
-    className="hidden"
-  />
-</div>
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleUploadExcel}
+                      id="excelUpload"
+                      className="hidden"
+                    />
+                  </div>
                   {/* <input
                     type="text"
                     value={qid}
@@ -540,7 +545,7 @@ const DefineSyllabus = () => {
                     });
 
                     const questionData = fullDetails?.questions || [];
-                 
+
                     const topicMap = {};
 
                     questionData.forEach((q) => {
@@ -576,7 +581,7 @@ const DefineSyllabus = () => {
                     //   "AutoPickedQuestions",
                     //   JSON.stringify(updated)
                     // );
-                    
+
                     sessionStorage.setItem(
                       "pickedQuestions",
                       JSON.stringify(updated)

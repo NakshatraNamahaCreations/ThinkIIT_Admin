@@ -64,7 +64,8 @@ import Results from "./pages/BatchCreation/Results";
 // import TCreation from "./pages/Tests/TCreation";
 import TCreation from "./pages/Test/TCreation";
 import ReviewPage from "./pages/Tests/ReviewPage";
-import DefineSyllabus from "./pages/Tests/DefineSyllabus";
+// import DefineSyllabus from "./pages/Tests/DefineSyllabus";
+import TestSelection from "./pages/Test/TestSelection";
 import QuestionNumber from "./pages/Tests/QuestionNumber";
 import QuestionForms from "./pages/Tests/QuestionForms";
 import QuestionPages from "./pages/Tests/QuestionPages";
@@ -166,6 +167,7 @@ const App = () => {
               <Route path="/TCreationlist" element={<TCreationlist />} /> */}
               {/* SECTION TEST CREATION  */}
               <Route path="/TCreation" element={<TCreation />} />
+              <Route path="/test-selection" element={<TestSelection />} />
               {/* <Route path="/define-syllabus/:id" element={<DefineSyllabus />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForm />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForms />} /> */}

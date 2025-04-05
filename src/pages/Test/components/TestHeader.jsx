@@ -1,31 +1,108 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Box, Tabs, Tab, IconButton, Button, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import { useParams } from "react-router-dom";
+import testServices from "../../../services/testService";
 
-const TestHeader = ({ activeSectionId, setActiveSectionId }) => {
-  const [allSections, setAllSections] = useState([
-    { id: 1, sectionName: "Section 1" },
-    { id: 2, sectionName: "Section 2" },
-  ]);
-  const [activeSections, setActiveSections] = useState([1, 2]);
+const TestHeader = ({
+  activeSectionId,
+  setActiveSectionId,
+  sectionData,
+  setSectionData,
+  allSections,
+  setAllSections,
+}) => {
+  // const [allSections, setAllSections] = useState([]);
+  const [activeSections, setActiveSections] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [addingNew, setAddingNew] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const containerRef = useRef(null);
 
+  const { id } = useParams();
+
+  // const fetchTestDataById = async (id) => {
+  //   try {
+
+  //     const response = await testServices.getTestById(id);
+  //     const test = response?.data;
+
+  //     if (!test) {
+  //       console.warn("No test data found in response");
+  //       return;
+  //     }
+  //     if (!Array.isArray(test.sections)) {
+  //       console.warn("Sections is not an array:", test.sections);
+  //       return;
+  //     }
+
+  //     if (test.sections.length === 0) {
+  //       console.warn("No sections found for this test.");
+  //       return;
+  //     }
+
+  //     const fetchedSections = test.sections.map((section, idx) => ({
+  //       id: section._id,
+  //       sectionName: `Section ${String.fromCharCode(65 + idx)}`,
+  //     }));
+  // console.log("the fetched", fetchedSections);
+
+  //     setAllSections(fetchedSections);
+  //     setActiveSections(fetchedSections.map((s) => s.id));
+  //     setActiveIndex(0);
+  //     setActiveSectionId(fetchedSections[0].id);
+
+  //     const initialSectionData = {};
+  //     test.sections.forEach((section) => {
+  //       initialSectionData[section._id] = {
+  //         subjectSelections: [],
+  //         classSelections: [""],
+  //         questionType: section.questionType || "SCQ",
+  //         positiveMarking: section.correctAnswerMarks || "",
+  //         negativeMarking: section.negativeMarks || "",
+  //         searchText: "",
+  //         selectionType: "Manual",
+  //         questionBankQuestionId: section.questionBankQuestionId || [],
+  //         chapter: section.chapter || [],
+  //         topic: section.topic || [],
+  //       };
+  //     });
+
+  //     setSectionData(initialSectionData);
+  //   } catch (error) {
+  //     console.error("Error fetching test by ID:", error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchTestDataById(id);
+  // }, [id]);
+  useEffect(() => {
+    console.log("All Sections:", allSections);
+    console.log("Active Sections:", activeSections);
+  }, [allSections, activeSections]);
+
   const handleTabChange = (event, newIndex) => {
     setActiveIndex(newIndex);
     setActiveSectionId(activeSections[newIndex]);
   };
-  const confirmAddSection = () => {
+  const confirmAddSection = async () => {
     const name = newSectionName.trim();
     if (!name) return;
 
-    const newId = Date.now();
+    const payload = {
+      sectionName: newSectionName
+    }
+    const response = await testServices.createSections(id, payload);
+
+    const updatedTest = response?.data;
+    const createdSection = updatedTest.sections[updatedTest.sections.length - 1];
+    const newId = createdSection._id; 
+    const sectionName = createdSection.sectionName;
     const newSection = { id: newId, sectionName: name };
     const updatedSections = [...allSections, newSection];
     const updatedActive = [...activeSections, newId];
@@ -35,6 +112,23 @@ const TestHeader = ({ activeSectionId, setActiveSectionId }) => {
     setActiveIndex(updatedActive.length - 1);
     setNewSectionName("");
     setAddingNew(false);
+
+
+  
+    setSectionData((prev) => ({
+      ...prev,
+      [newId]: {
+        subjectSelections: [],
+        classSelections: [""],
+        questionType: "SCQ",
+        positiveMarking: "",
+        negativeMarking: "",
+        searchText: "",
+        selectionType: "Manual",
+      },
+    }));
+
+    setActiveSectionId(newId);
 
     setTimeout(() => {
       containerRef.current?.scrollTo({
@@ -71,6 +165,14 @@ const TestHeader = ({ activeSectionId, setActiveSectionId }) => {
       });
     }, 100);
   };
+  useEffect(() => {
+    if (allSections.length > 0) {
+      const ids = allSections.map((s) => s.id);
+      setActiveSections(ids);
+      setActiveSectionId(ids[0]);
+      setActiveIndex(0);
+    }
+  }, [allSections]);
 
   const handleSaveDraft = () => {
     const activeData = allSections.filter((sec) =>
@@ -220,8 +322,8 @@ const TestHeader = ({ activeSectionId, setActiveSectionId }) => {
                 backgroundColor: "green",
                 mt: "2px",
                 "&:hover": {
-                  backgroundColor: "green", 
-                  color: "white", 
+                  backgroundColor: "green",
+                  color: "white",
                 },
               }}
             >

@@ -2,6 +2,17 @@ import axios from "axios";
 import { config } from "./config";
 
 const apiServices = {
+  // create the subject 
+  createSubject: async () => {
+    try {
+      const response = await axios.post(`${config.BASE_URL_QUESTIONS}subject`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      throw error;
+    }
+  },
+
   // Fetch all classes
   fetchClasses: async () => {
     try {

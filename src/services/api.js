@@ -6,7 +6,7 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// ✅ Attach Token to Every Request
+
 api.interceptors.request.use(
   (requestConfig) => {
     const token = localStorage.getItem("token");
@@ -18,7 +18,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Global Error Handling
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

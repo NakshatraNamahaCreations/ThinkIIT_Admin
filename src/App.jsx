@@ -167,7 +167,7 @@ const App = () => {
               <Route path="/TCreationlist" element={<TCreationlist />} /> */}
               {/* SECTION TEST CREATION  */}
               <Route path="/TCreation" element={<TCreation />} />
-              <Route path="/test-selection" element={<TestSelection />} />
+              <Route path="/test-selection/:id" element={<TestSelection />} />
               {/* <Route path="/define-syllabus/:id" element={<DefineSyllabus />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForm />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForms />} /> */}

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper } from "@mui/material";
+import apiServices from "../../../services/apiServices";
 
 const dummyData = [
   {
@@ -54,9 +55,11 @@ const dummyData = [
   },
 ];
 
-const ChapterAndTopic = () => {
+const ChapterAndTopic = ({chapters}) => {
   const [selectedTopics, setSelectedTopics] = useState([]);
+  const [topicsByChapter, setTopicsByChapter] = useState({});
 
+  
   const handleTopicClick = (chapterId, topicId) => {
     const uniqueId = `${chapterId}-${topicId}`;
 
@@ -67,12 +70,35 @@ const ChapterAndTopic = () => {
     );
   };
 
+  useEffect(() => {
+    const fetchAllTopics = async () => {
+      const topicData = {};
+      for (let chapter of chapters) {
+        try {
+          const topics = await apiServices.fetchTopic(chapter._id);
+          console.log("the woring", topics);
+          
+          topicData[chapter._id] = topics;
+        } catch (err) {
+          console.error("Error fetching topics for", chapter.chapterName, err);
+        }
+      }
+      setTopicsByChapter(topicData);
+    };
+  
+    if (chapters.length) {
+      fetchAllTopics();
+    }
+  }, [chapters]);
+  
+
+
   const isSelected = (chapterId, topicId) =>
     selectedTopics.includes(`${chapterId}-${topicId}`);
 
   return (
     <Box sx={{ p: 2 }}>
-      {dummyData.map((chapter, index) => (
+      {chapters.map((chapter, index) => (
         <Paper
           key={chapter.chapterId}
           elevation={3}
@@ -104,9 +130,9 @@ const ChapterAndTopic = () => {
                 flexWrap: "wrap",
               }}
             >
-              {chapter.topics.map((topic) => (
+              {(topicsByChapter[chapter._id] || []).map((topic) => (
                 <Typography
-                  key={topic.topicId}
+                  key={topic._id}
                   variant="body2"
                   onClick={() =>
                     handleTopicClick(chapter.chapterId, topic.topicId)

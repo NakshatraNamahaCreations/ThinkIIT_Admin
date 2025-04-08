@@ -7,6 +7,7 @@ import QuestionDistributionSidebar from "./components/QuestionDistributionSideba
 import axios from "axios";
 import "./styles/QuestionPages.css";
 import { formatMathJaxContent } from "../../utils/helper";
+import TestHeader from "../Test/components/TestHeader";
 const FilterDropdown = ({ name, label, value, onChange, options }) => {
   return (
     <div className="min-w-[20px]">
@@ -63,6 +64,12 @@ const QuestionPages = () => {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [sectionWiseQuestions, setSectionWiseQuestions] = useState({});
   const navigate = useNavigate();
+  const sectionMarkingData = JSON.parse(
+    sessionStorage.getItem("sectionMarkingData") || "{}"
+  );
+  const [sectionData, setSectionData] = useState({});
+  const [allSections, setAllSections] = useState([]);
+  const [activeSectionId, setActiveSectionId] = useState(null);
 
   const fetchTestDataById = async (id) => {
     try {
@@ -152,14 +159,19 @@ const QuestionPages = () => {
 
         const sectionId = selectedSection._id;
         const manualPick = sessionStorage.getItem("ManualPick");
+
+        const sessionSection = sectionMarkingData[sectionId] || {};
         const parsedManual = manualPick ? JSON.parse(manualPick) : null;
         console.log("the aprse manual", parsedManual);
 
         if (parsedManual) {
           const payload = {
-            Subject: selectedSection.subject?.trim(),
-
-            questionType: selectedSection.questionType?.trim(),
+            Subject: (
+              sessionSection.subjectSelections?.[0]?.subjectName ||
+              sessionSection.subjectSelections?.[0] ||
+              ""
+            ).trim(),
+            questionType: (sessionSection.questionType || "").trim(),
           };
 
           const response = await testServices.GetFilteredQuestions(payload);
@@ -172,14 +184,14 @@ const QuestionPages = () => {
           }));
         } else {
           const payload = {
-            Subject: selectedSection.subject?.trim(),
-            chapter:
-              selectedSection.chapter?.map((chap) => chap.chapterName.trim()) ||
-              [],
-            topic:
-              selectedSection.topic?.map((topic) => topic.topicName.trim()) ||
-              [],
-            questionType: selectedSection.questionType?.trim(),
+            Subject: (
+              sessionSection.subjectSelections?.[0]?.subjectName ||
+              sessionSection.subjectSelections?.[0] ||
+              ""
+            ).trim(),
+            chapter: (sessionSection.chapte || "").trim(),
+            topic: sessionStorage.topic?.map((topic) => topic.trim()) || [],
+            questionType: (sessionSection.questionType || "").trim(),
           };
 
           const response = await testServices.GetFilteredQuestions(payload);
@@ -211,9 +223,11 @@ const QuestionPages = () => {
     const parsedManual = JSON.parse(
       sessionStorage.getItem("ManualPick") || "{}"
     );
+
     const parsedAuto = JSON.parse(
       sessionStorage.getItem("AutoPickedQuestions") || "{}"
     );
+
 
     const fetchTestDetails = async () => {
       try {
@@ -226,17 +240,26 @@ const QuestionPages = () => {
         // Fetch all questions for each section
         const allQuestions = await Promise.all(
           testData.sections.map(async (section) => {
+            const sectionId = section._id;
+            const sessionSection = sectionMarkingData[sectionId] || {};
+
             const payload = {
-              Subject: section.subject?.trim(),
-              questionType: section.questionType?.trim(),
-              ...(Object.keys(parsedManual).length
-                ? {}
-                : {
-                    chapter:
-                      section.chapter?.map((c) => c.chapterName.trim()) || [],
-                    topic: section.topic?.map((t) => t.topicName.trim()) || [],
-                  }),
+              Subject: (
+                sessionSection.subjectSelections?.[0]?.subjectName ||
+                sessionSection.subjectSelections?.[0] ||
+                ""
+              ).trim(),
+              questionType: (sessionSection.questionType || "").trim(),
+              chapter:
+                sessionSection.chapter?.map((c) =>
+                  typeof c === "string" ? c.trim() : c.chapterName.trim()
+                ) || [],
+              topic:
+                sessionSection.topic?.map((t) =>
+                  typeof t === "string" ? t.trim() : t.topicName.trim()
+                ) || [],
             };
+
             const result = await testServices.GetFilteredQuestions(payload);
             return { sectionId: section._id, questions: result };
           })
@@ -313,7 +336,22 @@ const QuestionPages = () => {
 
     fetchTestDetails();
   }, [id]);
+  useEffect(() => {
+    const sectionMarkingData = JSON.parse(
+      sessionStorage.getItem("sectionMarkingData") || "{}"
+    );
 
+    if (testDetails?.sections?.length > 0) {
+      const sections = testDetails.sections.map((section, idx) => ({
+        id: section._id,
+        sectionName: section.sectionName || `Section ${idx + 1}`,
+      }));
+
+      setAllSections(sections);
+      setSectionData(sectionMarkingData);
+      setActiveSectionId(testDetails.sections[0]._id);
+    }
+  }, [testDetails]);
   // const handleCheck = (e) => {
   //   const {name, value} = e.target.value;
   //   setFilters(() => {
@@ -391,9 +429,8 @@ const QuestionPages = () => {
         ...prev,
         [sectionId]: updatedSection,
       };
-
+      sessionStorage.removeItem("pickedQuestions");
       sessionStorage.setItem("pickedQuestions", JSON.stringify(updated));
-      localStorage.setItem("pickedQuestions", JSON.stringify(updated));
 
       return updated;
     });
@@ -467,8 +504,9 @@ const QuestionPages = () => {
             });
 
             setPickedQuestions(merged);
+            sessionStorage.removeItem("pickedQuestions");
             sessionStorage.setItem("pickedQuestions", JSON.stringify(merged));
-            localStorage.setItem("pickedQuestions", JSON.stringify(merged));
+            // localStorage.setItem("pickedQuestions", JSON.stringify(merged));
           }
         } catch (error) {
           console.error("Error parsing AutoPickedQuestions:", error);
@@ -647,9 +685,38 @@ const QuestionPages = () => {
 
     return isPickedB - isPickedA;
   });
+  useEffect(() => {
+    const sectionMarkingData = JSON.parse(
+      sessionStorage.getItem("sectionMarkingData") || "{}"
+    );
+
+    if (testDetails?.sections?.length > 0) {
+      const sections = testDetails.sections.map((section, idx) => ({
+        id: section._id,
+        sectionName: section.sectionName || `Section ${idx + 1}`,
+      }));
+
+      setAllSections(sections);
+      setSectionData(sectionMarkingData);
+      setActiveSectionId(testDetails.sections[0]._id);
+    }
+  }, [testDetails]);
 
   return (
     <MathJaxContext version={3} config={config}>
+      <TestHeader
+        activeSectionId={activeSectionId}
+        setActiveSectionId={(id) => {
+          setActiveSectionId(id);
+          const selected = testDetails?.sections?.find((s) => s._id === id);
+          setSelectedSection(selected);
+        }}
+        sectionData={sectionData}
+        setSectionData={setSectionData}
+        allSections={allSections}
+        setAllSections={setAllSections}
+      />
+
       <div className="flex gap-6 bg-gray-100 min-h-screen">
         <QuestionDistributionSidebar
           onSelectTopic={handleTopicSelect}
@@ -692,7 +759,7 @@ const QuestionPages = () => {
           </div>
           <div>
             {filteredQuestions?.length > 0 ? (
-              sortQuestions.map((question) => {
+              filteredQuestions.map((question) => {
                 const imageMatch = question.English?.match(
                   /\\includegraphics\[.*?\]{(.*?)}/
                 );
@@ -703,11 +770,13 @@ const QuestionPages = () => {
                 )
                   .replace(/\\includegraphics\[.*?\]{.*?}/g, "")
                   .trim();
-                const topicKey = question.Topic?.trim();
+
+                const sectionId = selectedSection?._id;
+                const topicKey = (question.Topic || "General").trim();
+
                 const isPicked =
-                  pickedQuestions[selectedSection?._id]?.[topicKey]?.[
-                    question._id
-                  ];
+                  pickedQuestions?.[sectionId]?.[topicKey]?.[question._id] ??
+                  false;
 
                 // const topicKey = (question.Topic || "General").trim().toLowerCase();
 

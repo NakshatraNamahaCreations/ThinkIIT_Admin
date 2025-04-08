@@ -168,17 +168,17 @@ const App = () => {
               {/* SECTION TEST CREATION  */}
               <Route path="/TCreation" element={<TCreation />} />
               <Route path="/test-selection/:id" element={<TestSelection />} />
-              <Route path="/define-syllabus/:id" element={<DefineSyllabus />} />
+              {/* <Route path="/define-syllabus/:id" element={<DefineSyllabus />} /> */}
               {/* <Route path="/questionForm/:id" element={<QuestionForm />} /> */}
-              <Route path="/questionForm/:id" element={<QuestionForms />} />
+              {/* <Route path="/questionForm/:id" element={<QuestionForms />} /> */}
               {/* <Route path="/questionPage/:id" element={<QuestionsPage />} /> */}
               <Route path="/questionPage/:id" element={<QuestionPages />} />
-              {/* <Route path="/questionReview/:id" element={<ReviewPage />} /> */}
+              <Route path="/questionReview/:id" element={<ReviewPage />} />
               {/* <Route path="/questionForm" element={< />} /> */}
-              <Route
+              {/* <Route
                 path="/question-selection/:id"
                 element={<QuestionNumber />}
-              />
+              /> */}
               <Route path="/OnlineOffline" element={<OnlineOffline />} />
               <Route path="/TSeries" element={<TseriesCreation />} />
               <Route path="/marketing" element={<Marketing />} />

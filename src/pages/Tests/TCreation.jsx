@@ -206,7 +206,7 @@ const TCreation = () => {
                   <td className="px-4 py-3 text-gray-600">{assignment.testDuration}</td>
                   <td className="px-4 py-3 flex items-center gap-4 text-indigo-600 font-medium">
                     <button className="hover:underline" onClick={()=>handleOpenView(assignment._id)}>View</button>
-                    <button className="hover:underline" onClick={()=>navigate(`/questionForm/${assignment._id}`)}>Edit</button>
+                    <button className="hover:underline" onClick={()=>navigate(`/question-selection/${assignment._id}`)}>Edit</button>
 
                     {/* Replace the Switch with Checkbox */}
                     {/* <FormGroup row>

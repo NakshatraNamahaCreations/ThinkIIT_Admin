@@ -194,21 +194,22 @@ const ReviewPage = () => {
                       >
                         {`${formatMathJaxContent(question.English)}`}
                       </MathJax>
-                      <Box sx={{display:'flex', justifyContent:'end'}}>
-                      {imageId && question.Images && question.Images[imageId] ? (
-  <img
-    src={`data:image/jpeg;base64,${question.Images[imageId]}`}
-    alt="Question Diagram"
-    className="w-[250px] h-[200px] border rounded-lg shadow-sm"
-  />
-) : (
-  console.warn(`Missing image for ID: ${imageId}`)
-)}
+                      <Box sx={{ display: "flex", justifyContent: "end" }}>
+                        {imageId &&
+                        question.Images &&
+                        question.Images[imageId] ? (
+                          <img
+                            src={`data:image/jpeg;base64,${question.Images[imageId]}`}
+                            alt="Question Diagram"
+                            className="w-[250px] h-[200px] border rounded-lg shadow-sm"
+                          />
+                        ) : (
+                          console.warn(`Missing image for ID: ${imageId}`)
+                        )}
 
-                        {console.log(imageId)
-                        }
+                        {console.log(imageId)}
                       </Box>
-           
+
                       <ul className="mt-2 space-y-1">
                         {question.OptionsEnglish.split("\\\\")
                           .filter((option) => option.trim() !== "")

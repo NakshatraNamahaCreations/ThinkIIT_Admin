@@ -212,7 +212,7 @@ const TCreation = () => {
                     <button
                       className="hover:underline"
                       onClick={() =>
-                        navigate(`/questionForm/${assignment._id}`)
+                        navigate(`/test-selection/${assignment._id}`)
                       }
                     >
                       Edit

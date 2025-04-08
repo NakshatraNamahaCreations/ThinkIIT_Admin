@@ -15,7 +15,7 @@ import ChapterAndTopic from "./components/ChapterAndTopic";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoQuestionUI from "./components/AutoQuestionUI";
 import AddIcon from "@mui/icons-material/Add";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import testServices from "../../services/testService";
 import apiServices from "../../services/apiServices";
 import testPatterns from "./PreSection/Pattern.json";
@@ -35,17 +35,10 @@ const TestSelection = () => {
   const [selectedClass, setSelectedClass] = useState(null);
 
   const { id } = useParams();
+  const navigate = useNavigate();
 
-  const [sectionData, setSectionData] = useState({
-    1: {
-      subjectSelections: [],
-      questionType: "SCQ",
-      positiveMarking: "",
-      negativeMarking: "",
-      searchText: "",
-      selectionType: selectionType,
-    },
-  });
+  const [sectionData, setSectionData] = useState({});
+
   const syncToSessionStorage = (data) => {
     sessionStorage.setItem("sectionMarkingData", JSON.stringify(data));
   };
@@ -116,7 +109,7 @@ const TestSelection = () => {
   };
 
   useEffect(() => {
-    if (!sectionData[activeSectionId]) {
+    if (activeSectionId && !sectionData[activeSectionId]) {
       setSectionData((prev) => ({
         ...prev,
         [activeSectionId]: {
@@ -131,16 +124,41 @@ const TestSelection = () => {
       }));
     }
   }, [activeSectionId]);
+
+  // useEffect(() => {
+  //   const saved = sessionStorage.getItem("sectionMarkingData");
+  //   if (saved) {
+  //     const parsed = JSON.parse(saved);
+  //     setSectionData(parsed);
+
+  //     const firstKey = Object.keys(parsed)[0];
+  //     if (firstKey) setActiveSectionId(firstKey);
+  //   }
+  // }, []);
+
   useEffect(() => {
     const saved = sessionStorage.getItem("sectionMarkingData");
     if (saved) {
       const parsed = JSON.parse(saved);
       setSectionData(parsed);
-
+  
       const firstKey = Object.keys(parsed)[0];
-      if (firstKey) setActiveSectionId(firstKey);
+      if (firstKey) {
+        setActiveSectionId(firstKey);
+  
+        const firstSection = parsed[firstKey];
+        const subjectList = firstSection.subjectSelections;
+  
+        if (subjectList?.length > 0) {
+          // ✅ Handle both string and object subject types
+          const firstSub = typeof subjectList[0] === "string" ? subjectList[0] : subjectList[0].subjectName;
+  
+          setSelectedSubject(firstSub);
+        }
+      }
     }
   }, []);
+  
 
   useEffect(() => {
     const fetchSubject = async () => {
@@ -168,7 +186,6 @@ const TestSelection = () => {
             pattern.exam.toLowerCase().trim() ===
             test.testPattern.toLowerCase().trim()
         );
-
 
         const sessionSectionNames = JSON.parse(
           sessionStorage.getItem("customSectionNames") || "{}"
@@ -254,55 +271,50 @@ const TestSelection = () => {
   //     chapter: chapterNames,
   //     topic: topicNames,
   //   };
-  
+
   //   const updatedData = {
   //     ...sectionData,
   //     [activeSectionId]: updatedSection,
   //   };
-  
+
   //   console.log("Saving to sessionStorage:", updatedData);
   //   sessionStorage.setItem("sectionMarkingData", JSON.stringify(updatedData));
   // };
-  
-  const handleTopicsSelected = (chapterNames, topicNames) => {
 
+  const handleTopicsSelected = (chapterNames, topicNames) => {
     let updatedTopicData = [];
-  
+
     if (selectionType === "Auto") {
-    
       updatedTopicData = topicNames.map((topic) => ({
         topicName: topic.topicName,
-        numberOfQuestions: topic.numberOfQuestions || 0,  
+        numberOfQuestions: topic.numberOfQuestions || 0,
       }));
     } else {
       console.log("the topic chekc", topicNames);
-      
 
       updatedTopicData = topicNames.map((topic) => topic);
     }
-  
+
     // Create the updated section object with chapters and topics
     const updatedSection = {
       ...sectionData[activeSectionId],
       chapter: chapterNames,
       topic: updatedTopicData,
     };
-  
+
     // Merge the updated section data into the existing section data
     const updatedData = {
       ...sectionData,
       [activeSectionId]: updatedSection,
     };
-  
+
     // Save the updated data to sessionStorage
-    console.log("Saving to sessionStorage:", updatedData);
-    sessionStorage.setItem("sectionMarkingData", JSON.stringify(updatedData));
-  
+    // sessionStorage.setItem("sectionMarkingData", JSON.stringify(updatedData));
+
     // Update the sectionData state
     setSectionData(updatedData);
   };
-  
-  
+
   // const handleClassChange = (index, value) => {
   const handleClassChange = (value) => {
     // const updated = [...currentSection.classSelections];
@@ -317,13 +329,18 @@ const TestSelection = () => {
     //   },
     // }));
   };
+
   useEffect(() => {
     const savedClass = sessionStorage.getItem("selectedClass");
-    if (savedClass) {
-      setSelectedClass(savedClass);
+    const validClasses = ["Class 10", "Class 11", "Class 12"];
+
+    if (validClasses.includes(savedClass)) {
+      setSelectedClass(savedClass); // ✅ use correct casing
+    } else {
+      setSelectedClass(""); // fallback
     }
   }, []);
-  
+
   const handleSubjectChange = (index, value) => {
     const updated = [...currentSection.subjectSelections];
     updated[index] = value;
@@ -352,7 +369,6 @@ const TestSelection = () => {
 
   //   const response = await apiServices.fetchChapter(subjectObj._id);
 
-
   //   setChapters((prev) => ({
   //     ...prev,
   //     [value]: response, // response should be an array of chapters
@@ -363,17 +379,26 @@ const TestSelection = () => {
   // };
 
   const handleAddSubject = (value) => {
+    const selectedSubjectObj = subjects.find(
+      (sub) => sub.subjectName === value
+    );
+    if (!selectedSubjectObj) return;
+
     const updated = { ...sectionData };
 
-    if (!updated[activeSectionId].subjectSelections.includes(value)) {
-      updated[activeSectionId].subjectSelections.push(value);
+    if (
+      !updated[activeSectionId].subjectSelections.some(
+        (s) => s.subjectName === value
+      )
+    ) {
+      updated[activeSectionId].subjectSelections.push(selectedSubjectObj);
       setSectionData(updated);
       sessionStorage.setItem("sectionMarkingData", JSON.stringify(updated));
     }
 
-    if (!selectedSubject) {
-      setSelectedSubject(value);
-    }
+    // ✅ Set this subject as active tab
+    setSelectedSubject(value); // 👈 This line makes the new subject active
+
     setAddNew(false);
   };
 
@@ -384,11 +409,11 @@ const TestSelection = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       setSectionData(parsed);
-  
+
       const firstKey = Object.keys(parsed)[0];
       if (firstKey) {
         setActiveSectionId(firstKey);
-  
+
         const firstSection = parsed[firstKey];
         if (firstSection.subjectSelections?.length && !selectedSubject) {
           setSelectedSubject(firstSection.subjectSelections[0]);
@@ -396,7 +421,6 @@ const TestSelection = () => {
       }
     }
   }, []);
-  
 
   const handleRemoveSubject = (index) => {
     const updated = { ...sectionData };
@@ -423,59 +447,81 @@ const TestSelection = () => {
   const handleSelectionTypeChange = (event) => {
     const newSelectionType = event.target.value;
     setSelectionType(newSelectionType);
-  
+
     const updatedSectionData = { ...sectionData };
     updatedSectionData[activeSectionId].selectionType = newSelectionType;
     setSectionData(updatedSectionData);
-    syncToSessionStorage(updatedSectionData); 
+    syncToSessionStorage(updatedSectionData);
   };
-  
+
   const handleNextClick = async () => {
     try {
       const sectionData = JSON.parse(sessionStorage.getItem("sectionMarkingData"));
       const selectedClass = sessionStorage.getItem("selectedClass");
-  
       const currentSection = sectionData[activeSectionId];
-      console.log("the post current section", currentSection);
-      let check = currentSection.chapter.map(chapter => ({
-        chapterId: chapter.chapterId, 
-        chapterName: chapter.chapterName,
+  
+      // Format topic data
+      const topics = currentSection.topic.map((topic) => ({
+        topicName: topic.topicName || topic,
+        numberOfQuestions: topic.numberOfQuestions || 0,
+        chapterId: topic.chapterId || topic.chapter?._id || "", // fallback
       }));
-      console.log("the chcekc of chap", check);
-      
-      // Prepare the request data to match your schema
+  
+      // AutoPick API call if Auto is selected
+      if (selectionType === "Auto") {
+        const autoPickResponse = await testServices.AutoPickQuestions(id, {
+          sectionId: activeSectionId,
+          topics: topics,
+          totalQuestions: topics.reduce((sum, t) => sum + (t.numberOfQuestions || 0), 0),
+        });
+  
+        if (!autoPickResponse?.success) {
+          alert("Auto pick failed.");
+          return;
+        }
+  
+        const autoPicked = autoPickResponse.data;
+  
+        const existing = JSON.parse(sessionStorage.getItem("AutoPickedQuestions") || "{}");
+        const updated = { ...existing };
+  
+        if (!updated[activeSectionId]) updated[activeSectionId] = {};
+  
+        Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
+          updated[activeSectionId][topicName] = {
+            ...(updated[activeSectionId][topicName] || {}),
+            ...questionMap,
+          };
+        });
+  
+        sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
+      }
+  
+      // Save the section data via AddSectionDetails
       const requestData = {
         sectionId: activeSectionId,
         class: selectedClass,
-        subjects: currentSection.subjectSelections.map(subject => ({
-          subjectName: subject, 
+        subjects: currentSection.subjectSelections.map((subject) => ({
+          subjectName: subject.subjectName || subject,
         })),
         negativeMarksPerWrongAnswer: currentSection.negativeMarking,
         marksPerQuestion: currentSection.positiveMarking,
-        chapters: currentSection.chapter.map(chapter => ({
-       chapter
+        chapters: currentSection.chapter.map((chapter) => ({
+          chapterName: chapter.chapterName || chapter,
         })),
-        topics: currentSection.topic.map((topic) => ({
-   topic
-        })),
+        topics,
       };
   
-      console.log("Sending request data:", requestData);
-  
-      // Send the request to the backend
       const response = await testServices.AddSectionDetails(id, requestData);
   
-      if (response.status === 200) {
         alert("Section details saved successfully!");
-      }
+        navigate(`/questionPage/${id}`);
+  
     } catch (error) {
-      console.error("Error saving section details:", error);
-      alert("Error saving section details");
+      console.error("Error in handleNextClick:", error);
+      alert("An error occurred.");
     }
   };
-  
-  
-
   
 
   return (
@@ -536,8 +582,8 @@ const TestSelection = () => {
           />
         </Box>
         <Button variant="contained" onClick={handleNextClick}>
-      Next
-    </Button>
+          Next
+        </Button>
       </Box>
 
       {/* Subject SELECTION SECTION */}
@@ -553,13 +599,18 @@ const TestSelection = () => {
           pb: 2,
         }}
       >
-        {currentSection.subjectSelections.map((subject, index) => (
-          <Button
-            key={index}
-            variant="contained"
-            sx={{ backgroundColor: "#1976d2", fontWeight: "bold" }}
+        {currentSection?.subjectSelections?.map((subject, index) => (
+         <Button
+         key={index}
+         variant="contained"
+         sx={{
+           backgroundColor: subject.subjectName === selectedSubject ? "#1976d2" : "white",
+           border:subject.subjectName === selectedSubject ?"" : "1px solid black",
+           fontWeight: "bold",
+           color: subject.subjectName === selectedSubject ? "white" : "black",
+         }}
             onClick={async () => {
-              setSelectedSubject(subject);
+              setSelectedSubject(subject.subjectName);
 
               //   const subjectObj = subjects.find((sub) => sub.subjectName === value);
               //   if (subjectObj) {
@@ -583,50 +634,46 @@ const TestSelection = () => {
               </IconButton>
             }
           >
-            {subject}
+            {subject.subjectName}
           </Button>
         ))}
 
-        {addNew ? (
-          <TextField
-            select
-            label="Add Subject"
-            onChange={(e) => handleAddSubject(e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          >
-            {subjects?.map((sub) => (
-              <MenuItem key={sub._id} value={sub.subjectName}>
-                {sub.subjectName}
-              </MenuItem>
-            ))}
-            {/* <MenuItem value="Maths">Maths</MenuItem>
-            <MenuItem value="Physics">Physics</MenuItem>
-            <MenuItem value="Chemistry">Chemistry</MenuItem>
-            <MenuItem value="Botany">Botany</MenuItem>
-            <MenuItem value="Zoology">Zoology</MenuItem> */}
-          </TextField>
-        ) : (
-          <IconButton
-            onClick={() => setAddNew(true)}
-            sx={{
-              border: "1px solid #ccc",
-              ml: 1,
-              height: "36px",
-              width: "36px",
-              borderRadius: "4px",
-              alignSelf: "center",
-              backgroundColor: "green",
-              mt: "2px",
-              "&:hover": {
-                backgroundColor: "green",
-                color: "white",
-              },
-            }}
-          >
-            <AddIcon fontSize="small" style={{ color: "white" }} />
-          </IconButton>
-        )}
+{currentSection?.subjectSelections?.length === 0 || addNew ? (
+  <TextField
+    select
+    label="Add Subject"
+    onChange={(e) => handleAddSubject(e.target.value)}
+    size="small"
+    sx={{ minWidth: 160 }}
+  >
+    {subjects?.map((sub) => (
+      <MenuItem key={sub._id} value={sub.subjectName}>
+        {sub.subjectName}
+      </MenuItem>
+    ))}
+  </TextField>
+) : (
+  <IconButton
+    onClick={() => setAddNew(true)}
+    sx={{
+      border: "1px solid #ccc",
+      ml: 1,
+      height: "36px",
+      width: "36px",
+      borderRadius: "4px",
+      alignSelf: "center",
+      backgroundColor: "green",
+      mt: "2px",
+      "&:hover": {
+        backgroundColor: "green",
+        color: "white",
+      },
+    }}
+  >
+    <AddIcon fontSize="small" style={{ color: "white" }} />
+  </IconButton>
+)}
+
       </Box>
 
       {/* SEARCH and SELECTION TYPE SECTION */}
@@ -641,17 +688,17 @@ const TestSelection = () => {
       >
         {currentSection?.classSelections?.map((classSelected, index) => (
           <TextField
-            key={index}
             select
-            label={`Select Class`}
-            value={selectedClass}
-            // onChange={(e) => handleClassChange(index, e.target.value)}
+            label="Select Class"
+            value={selectedClass || ""}
             onChange={(e) => handleClassChange(e.target.value)}
+            size="small"
             sx={{ minWidth: 160 }}
           >
-            <MenuItem value="class 10">Class 10</MenuItem>
-            <MenuItem value="class 11">Class 11</MenuItem>
-            <MenuItem value="class 12">Class 12</MenuItem>
+            <MenuItem value="">Select Class</MenuItem>
+            <MenuItem value="Class 10">Class 10</MenuItem>
+            <MenuItem value="Class 11">Class 11</MenuItem>
+            <MenuItem value="Class 12">Class 12</MenuItem>
           </TextField>
         ))}
 
@@ -733,8 +780,6 @@ const TestSelection = () => {
                 );
               });
 
-              console.log("Filtered chapters:", filteredChapters);
-
               setChapters((prev) => ({
                 ...prev,
                 [selectedSubject]: filteredChapters,
@@ -750,38 +795,29 @@ const TestSelection = () => {
         <Typography sx={{ fontWeight: 500 }}>Question Selection:</Typography>
 
         <RadioGroup
-  row
-  value={selectionType}
-  onChange={handleSelectionTypeChange}
->
-  <FormControlLabel
-    value="Manual"
-    control={<Radio />}
-    label="Manual"
-  />
-  <FormControlLabel
-    value="Auto"
-    control={<Radio />}
-    label="Auto"
-  />
-</RadioGroup>
+          row
+          value={selectionType}
+          onChange={handleSelectionTypeChange}
+        >
+          <FormControlLabel value="Manual" control={<Radio />} label="Manual" />
+          <FormControlLabel value="Auto" control={<Radio />} label="Auto" />
+        </RadioGroup>
       </Box>
 
       {selectionType === "Manual" && (
-  <ChapterAndTopic
-    chapters={chapters[selectedSubject] || []}
-    onTopicsSelected={handleTopicsSelected}
-  />
-)}
+        <ChapterAndTopic
+          chapters={chapters[selectedSubject] || []}
+          onTopicsSelected={handleTopicsSelected}
+        />
+      )}
 
-
-{selectionType === "Auto" && (
-  <AutoQuestionUI
-  chapters={chapters[selectedSubject] || []}
-  sectionData={sectionData}  
-  activeSectionId={activeSectionId}  
-  />
-)}
+      {selectionType === "Auto" && (
+        <AutoQuestionUI
+          chapters={chapters[selectedSubject] || []}
+          sectionData={sectionData}
+          activeSectionId={activeSectionId}
+        />
+      )}
     </>
   );
 };

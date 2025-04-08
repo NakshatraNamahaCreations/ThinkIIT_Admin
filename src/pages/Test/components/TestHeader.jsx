@@ -93,51 +93,63 @@ const TestHeader = ({
   const confirmAddSection = async () => {
     const name = newSectionName.trim();
     if (!name) return;
-
-    const payload = {
-      sectionName: newSectionName
-    }
-    const response = await testServices.createSections(id, payload);
-
-    const updatedTest = response?.data;
-    const createdSection = updatedTest.sections[updatedTest.sections.length - 1];
-    const newId = createdSection._id; 
-    const sectionName = createdSection.sectionName;
-    const newSection = { id: newId, sectionName: name };
-    const updatedSections = [...allSections, newSection];
-    const updatedActive = [...activeSections, newId];
-
-    setAllSections(updatedSections);
-    setActiveSections(updatedActive);
-    setActiveIndex(updatedActive.length - 1);
-    setNewSectionName("");
-    setAddingNew(false);
-
-
   
-    setSectionData((prev) => ({
-      ...prev,
-      [newId]: {
-        subjectSelections: [],
-        classSelections: [""],
-        questionType: "SCQ",
-        positiveMarking: "",
-        negativeMarking: "",
-        searchText: "",
-        selectionType: "Manual",
-      },
-    }));
-
-    setActiveSectionId(newId);
-
-    setTimeout(() => {
-      containerRef.current?.scrollTo({
-        left: containerRef.current.scrollWidth,
-        behavior: "smooth",
-      });
-    }, 100);
+    try {
+      const payload = { sectionName: newSectionName };
+      const response = await testServices.createSections(id, payload);
+  
+      const updatedTest = response?.data;
+      const createdSection = updatedTest.sections[updatedTest.sections.length - 1];
+  
+      const newId = createdSection._id;
+      const sectionName = createdSection.sectionName;
+  
+      const newSection = { id: newId, sectionName: name };
+  
+      // Update allSections first
+      const updatedSections = [...allSections, newSection];
+      setAllSections(updatedSections);
+  
+      // After allSections is updated, now update active and index
+      setTimeout(() => {
+        setActiveSections((prev) => {
+          const newActive = [...prev, newId];
+          setActiveIndex(newActive.length - 1);
+          setActiveSectionId(newId);
+          return newActive;
+        });
+  
+        // Scroll into view after DOM updates
+        setTimeout(() => {
+          containerRef.current?.scrollTo({
+            left: containerRef.current.scrollWidth,
+            behavior: "smooth",
+          });
+        }, 100);
+      }, 0);
+  
+      // Add initial sectionData
+      setSectionData((prev) => ({
+        ...prev,
+        [newId]: {
+          subjectSelections: [],
+          classSelections: [""],
+          questionType: "SCQ",
+          positiveMarking: "",
+          negativeMarking: "",
+          searchText: "",
+          selectionType: "Manual",
+        },
+      }));
+  
+      setNewSectionName("");
+      setAddingNew(false);
+    } catch (err) {
+      console.error("Failed to add section:", err);
+    }
   };
-
+  
+  
   const handleToggleSection = (id) => {
     let updated;
 

@@ -362,6 +362,21 @@ const testServices = {
     return { success: false, message: "Error uploading file" };
   }
   },
+
+  AddSectionDetails: async (testId, data) => {
+    try{
+      const response = await axios.post(
+        `${config.BASE_URL_TEST}newTest/add-details/${testId}`,
+        data
+      );
+  
+      return response.data;
+    }
+  catch(error){
+    console.error("Error uploading file", error);
+    return { success: false, message: "Error uploading file" };
+  }
+  },
   
 };
 

@@ -32,7 +32,7 @@ const QuestionNumber = () => {
         const initialSectionTotals = {};
   
         data.data.sections.forEach((section) => {
-          initialSectionTotals[section._id] = 0; // Initialize section total to 0
+          initialSectionTotals[section._id] = 0; 
   
           section.topic.forEach((topic) => {
             if (!initialSelectedTopics[section._id]) {
@@ -40,11 +40,10 @@ const QuestionNumber = () => {
             }
             initialSelectedTopics[section._id][topic.topicName] = {
               topicName: topic.topicName,
-              numberOfQuestions: topic.numberOfQuestions || 0, // Set number of questions if available
+              numberOfQuestions: topic.numberOfQuestions || 0, 
               chapterId: topic.chapterId,
             };
   
-            // Initialize section total with predefined number of questions
             initialSectionTotals[section._id] += topic.numberOfQuestions || 0;
           });
         });

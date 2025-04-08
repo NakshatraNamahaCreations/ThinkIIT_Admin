@@ -2,64 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper } from "@mui/material";
 import apiServices from "../../../services/apiServices";
 
-const dummyData = [
-  {
-    chapterId: "chapter_001",
-    chapterName: "Thermodynamics",
-    topics: [
-      {
-        topicId: "topic_001",
-        topicName: "Heat Transfer",
-      },
-      {
-        topicId: "topic_002",
-        topicName: "Entropy",
-      },
-      {
-        topicId: "topic_003",
-        topicName: "Thermodynamic Processes",
-      },
-    ],
-  },
-  {
-    chapterId: "chapter_002",
-    chapterName: "Kinematics",
-    topics: [
-      {
-        topicId: "topic_004",
-        topicName: "Velocity",
-      },
-      {
-        topicId: "topic_005",
-        topicName: "Acceleration",
-      },
-      {
-        topicId: "topic_006",
-        topicName: "Motion Graphs",
-      },
-    ],
-  },
-  {
-    chapterId: "chapter_003",
-    chapterName: "Organic Chemistry",
-    topics: [
-      {
-        topicId: "topic_007",
-        topicName: "Hydrocarbons",
-      },
-      {
-        topicId: "topic_008",
-        topicName: "Functional Groups",
-      },
-    ],
-  },
-];
-
-const ChapterAndTopic = ({chapters}) => {
+const ChapterAndTopic = ({ chapters, onTopicsSelected }) => {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [topicsByChapter, setTopicsByChapter] = useState({});
 
-  
+  // Load from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("selectedChapterTopics");
+    if (saved) {
+      setSelectedTopics(JSON.parse(saved));
+    }
+  }, []);
+
+  // Update sessionStorage whenever selectedTopics changes
+  useEffect(() => {
+    sessionStorage.setItem("selectedChapterTopics", JSON.stringify(selectedTopics));
+  }, [selectedTopics]);
+
   const handleTopicClick = (chapterId, topicId) => {
     const uniqueId = `${chapterId}-${topicId}`;
 
@@ -76,8 +35,6 @@ const ChapterAndTopic = ({chapters}) => {
       for (let chapter of chapters) {
         try {
           const topics = await apiServices.fetchTopic(chapter._id);
-          console.log("the woring", topics);
-          
           topicData[chapter._id] = topics;
         } catch (err) {
           console.error("Error fetching topics for", chapter.chapterName, err);
@@ -85,22 +42,39 @@ const ChapterAndTopic = ({chapters}) => {
       }
       setTopicsByChapter(topicData);
     };
-  
+
     if (chapters.length) {
       fetchAllTopics();
     }
   }, [chapters]);
+  useEffect(() => {
+    console.log("the checksss",selectedTopics);
+    
+    const selectedChapterNames = [...new Set(selectedTopics.map(id => {
+      const chapter = chapters.find(c => c._id === id.split("-")[0]);
+      return chapter?.chapterName;
+    }).filter(Boolean))];
   
-
-
+    const selectedTopicNames = selectedTopics.map(id => {
+      const chapterId = id.split("-")[0];
+      const topicId = id.split("-")[1];
+      const topic = topicsByChapter[chapterId]?.find(t => t._id === topicId);
+      return topic?.topicName;
+    }).filter(Boolean);
+  
+    if (onTopicsSelected) {
+      onTopicsSelected(selectedChapterNames, selectedTopicNames);
+    }
+  }, [selectedTopics, topicsByChapter]);
+  
   const isSelected = (chapterId, topicId) =>
     selectedTopics.includes(`${chapterId}-${topicId}`);
 
   return (
     <Box sx={{ p: 2 }}>
-      {chapters.map((chapter, index) => (
+      {chapters.map((chapter) => (
         <Paper
-          key={chapter.chapterId}
+          key={chapter._id}
           elevation={3}
           sx={{
             borderRadius: 2,
@@ -134,12 +108,10 @@ const ChapterAndTopic = ({chapters}) => {
                 <Typography
                   key={topic._id}
                   variant="body2"
-                  onClick={() =>
-                    handleTopicClick(chapter.chapterId, topic.topicId)
-                  }
+                  onClick={() => handleTopicClick(chapter._id, topic._id)}
                   sx={{
                     cursor: "pointer",
-                    backgroundColor: isSelected(chapter.chapterId, topic.topicId)
+                    backgroundColor: isSelected(chapter._id, topic._id)
                       ? "#dfffe0"
                       : "#fff",
                     borderRadius: 1,

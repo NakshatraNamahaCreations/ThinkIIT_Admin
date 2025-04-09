@@ -161,8 +161,10 @@ const QuestionPages = () => {
         const manualPick = sessionStorage.getItem("ManualPick");
 
         const sessionSection = sectionMarkingData[sectionId] || {};
+        console.log("teh sessiosn section", sessionSection);
+
         const parsedManual = manualPick ? JSON.parse(manualPick) : null;
-        console.log("the aprse manual", parsedManual);
+        console.log("the sesionsectioj cehckechekc", sectionMarkingData);
 
         if (parsedManual) {
           const payload = {
@@ -183,13 +185,15 @@ const QuestionPages = () => {
             [selectedSection._id]: response,
           }));
         } else {
+          console.log("the sessionStorage", sessionSection);
+
           const payload = {
             Subject: (
               sessionSection.subjectSelections?.[0]?.subjectName ||
               sessionSection.subjectSelections?.[0] ||
               ""
             ).trim(),
-            chapter: (sessionSection.chapte || "").trim(),
+            chapter: (sessionSection.chapter || "").trim(),
             topic: sessionStorage.topic?.map((topic) => topic.trim()) || [],
             questionType: (sessionSection.questionType || "").trim(),
           };
@@ -227,7 +231,6 @@ const QuestionPages = () => {
     const parsedAuto = JSON.parse(
       sessionStorage.getItem("AutoPickedQuestions") || "{}"
     );
-
 
     const fetchTestDetails = async () => {
       try {
@@ -349,9 +352,13 @@ const QuestionPages = () => {
 
       setAllSections(sections);
       setSectionData(sectionMarkingData);
+
+      // Automatically select the first section
       setActiveSectionId(testDetails.sections[0]._id);
+      setSelectedSection(testDetails.sections[0]);
     }
   }, [testDetails]);
+
   // const handleCheck = (e) => {
   //   const {name, value} = e.target.value;
   //   setFilters(() => {
@@ -675,16 +682,17 @@ const QuestionPages = () => {
       .replace(/\n/g, "\\\\");
   };
 
-  const sortQuestions = [...filteredQuestions]?.sort((a, b) => {
-    const sectionId = selectedSection?._id;
-    const topicA = a.Topic?.trim();
-    const topicB = b.Topic?.trim();
+  // const sortQuestions = [...filteredQuestions]?.sort((a, b) => {
+  //   const sectionId = selectedSection?._id;
+  //   const topicA = a.Topic?.trim();
+  //   const topicB = b.Topic?.trim();
 
-    const isPickedA = pickedQuestions[sectionId]?.[topicA]?.[a._id] ?? false;
-    const isPickedB = pickedQuestions[sectionId]?.[topicB]?.[b._id] ?? false;
+  //   const isPickedA = pickedQuestions[sectionId]?.[topicA]?.[a._id] ?? false;
+  //   const isPickedB = pickedQuestions[sectionId]?.[topicB]?.[b._id] ?? false;
 
-    return isPickedB - isPickedA;
-  });
+  //   return isPickedB - isPickedA;
+  // });
+
   useEffect(() => {
     const sectionMarkingData = JSON.parse(
       sessionStorage.getItem("sectionMarkingData") || "{}"
@@ -716,9 +724,11 @@ const QuestionPages = () => {
         allSections={allSections}
         setAllSections={setAllSections}
       />
-
+{console.log("thchcing",selectedSection)
+}
       <div className="flex gap-6 bg-gray-100 min-h-screen">
         <QuestionDistributionSidebar
+          subject={selectedSection?.subject?.map((s) => s.subjectName )|| "No Subject"}
           onSelectTopic={handleTopicSelect}
           pickedQuestions={pickedQuestions}
           handleSubmit={handleSubmit}

@@ -4,7 +4,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics(20)", "Chemistry(20)", "Maths(20)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 60,
           "correctAnswerMarks": 4,
@@ -12,7 +12,7 @@
         },
         {
           "sectionName": "B",
-          "subjects": ["Physics(5)", "Chemistry(5)", "Maths(5)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "NTQ",
           "questions": 15,
           "correctAnswerMarks": 4,
@@ -25,7 +25,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics(45)", "Chemistry(45)", "Maths(90)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 180,
           "correctAnswerMarks": 4,
@@ -38,7 +38,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics :(60)"],
+          "subjects": ["Physics"],
           "questionType": "SCQ",
           "questions": 60,
           "correctAnswerMarks": 1,
@@ -51,7 +51,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Chemistry :(60)"],
+          "subjects": ["Chemistry"],
           "questionType": "SCQ",
           "questions": 60,
           "correctAnswerMarks": 1,
@@ -64,7 +64,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Maths :(60)"],
+          "subjects": ["Maths"],
           "questionType": "SCQ",
           "questions": 60,
           "correctAnswerMarks": 1,
@@ -77,7 +77,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics :(8)", "Chemistry :(8)", "Maths :(8)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 18,
           "correctAnswerMarks": 3,
@@ -85,7 +85,7 @@
         },
         {
           "sectionName": "B",
-          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "MCQ",
           "questions": 9,
           "correctAnswerMarks": 4,
@@ -93,7 +93,7 @@
         },
         {
           "sectionName": "C",
-          "subjects": ["Physics :(4)", "Chemistry :(4)", "Maths :(4)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "CMP",
           "questions": 12,
           "correctAnswerMarks": 4,
@@ -101,7 +101,7 @@
         },
         {
           "sectionName": "D",
-          "subjects": ["Physics :(5)", "Chemistry :(5)", "Maths :(5)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "NTQ",
           "questions": 15,
           "correctAnswerMarks": 4,
@@ -114,7 +114,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics :(4)", "Chemistry :(4)", "Maths :(4)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 12,
           "correctAnswerMarks": 3,
@@ -122,7 +122,7 @@
         },
         {
           "sectionName": "B",
-          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "MCQ",
           "questions": 9,
           "correctAnswerMarks": 4,
@@ -130,7 +130,7 @@
         },
         {
           "sectionName": "C",
-          "subjects": ["Physics :(6)", "Chemistry :(6)", "Maths :(6)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "CMP",
           "questions": 18,
           "correctAnswerMarks": 4,
@@ -138,7 +138,7 @@
         },
         {
           "sectionName": "D",
-          "subjects": ["Physics :(6)", "Chemistry :(6)", "Maths :(6)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "NTQ",
           "questions": 18,
           "correctAnswerMarks": 4,
@@ -151,7 +151,7 @@
       "sections": [
         {
           "sectionName": "A",
-          "subjects": ["Physics :(30)", "Chemistry :(30)", "Maths :(40)", "English :(10)", "MAT :(20)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 130,
           "correctAnswerMarks": 3,
@@ -159,7 +159,7 @@
         },
         {
           "sectionName": "B",
-          "subjects": ["Physics :(3)", "Chemistry :(3)", "Maths :(3)", "MAT :(3)"],
+          "subjects": ["Physics", "Chemistry", "Maths"],
           "questionType": "SCQ",
           "questions": 12,
           "correctAnswerMarks": 3,

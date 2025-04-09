@@ -102,14 +102,21 @@ const TestSelection = () => {
         },
       };
 
-      syncToSessionStorage(updated);
-
+      sessionStorage.setItem("sectionMarkingData", JSON.stringify(updated));
       return updated;
     });
   };
 
   useEffect(() => {
-    if (activeSectionId && !sectionData[activeSectionId]) {
+    const fromSession = JSON.parse(
+      sessionStorage.getItem("sectionMarkingData") || "{}"
+    );
+
+    if (
+      activeSectionId &&
+      !sectionData[activeSectionId] &&
+      !fromSession[activeSectionId]
+    ) {
       setSectionData((prev) => ({
         ...prev,
         [activeSectionId]: {
@@ -141,24 +148,26 @@ const TestSelection = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       setSectionData(parsed);
-  
+
       const firstKey = Object.keys(parsed)[0];
       if (firstKey) {
         setActiveSectionId(firstKey);
-  
+
         const firstSection = parsed[firstKey];
         const subjectList = firstSection.subjectSelections;
-  
+
         if (subjectList?.length > 0) {
           // ✅ Handle both string and object subject types
-          const firstSub = typeof subjectList[0] === "string" ? subjectList[0] : subjectList[0].subjectName;
-  
+          const firstSub =
+            typeof subjectList[0] === "string"
+              ? subjectList[0]
+              : subjectList[0].subjectName;
+
           setSelectedSubject(firstSub);
         }
       }
     }
   }, []);
-  
 
   useEffect(() => {
     const fetchSubject = async () => {
@@ -174,73 +183,126 @@ const TestSelection = () => {
   }, [id]);
 
   useEffect(() => {
+    console.log("jsljsldjasdj");
+
+    // const fetchTestDataById = async () => {
+    //   try {
+    //     const response = await testServices.getTestById(id);
+    //     const test = response?.data;
+    //     console.log("theeeeeee test check ", test.testPattern);
+
+    //     // Check for matching test name in your predefined JSON
+    //     const matchedPattern = testPatterns.find(
+    //       (pattern) =>
+    //         pattern.exam.toLowerCase().trim() ===
+    //         test.testPattern.toLowerCase().trim()
+    //     );
+
+    //     const sessionSectionNames = JSON.parse(
+    //       sessionStorage.getItem("customSectionNames") || "{}"
+    //     );
+
+    //     let fetchedSections = [];
+    //     let initialData = {};
+    //     {
+    //       console.log("the sectionmatchccc", matchedPattern);
+    //     }
+    //     if (matchedPattern) {
+    //       // Use predefined JSON pattern
+    //       fetchedSections = matchedPattern.sections.map((section, idx) => {
+    //         {
+    //           console.log("the sectionsaaaaaaa", section);
+    //         }
+    //         const sectionId = `section-${idx}-${Date.now()}`;
+    //         initialData[sectionId] = {
+    // subjectSelections: section.subjects.map((s) =>
+    //   s.split("(")[0].trim()
+    // ), // Clean subject names
+    //           classSelections: [""],
+    //           questionType: section.questionType || "Tmm",
+    //           positiveMarking: section.correctAnswerMarks || "",
+    //           negativeMarking: section.negativeMarks || "",
+    //           searchText: "",
+    //           selectionType: selectionType,
+    //           questionBankQuestionId: [],
+    //           chapter: [],
+    //           topic: [],
+    //         };
+    //         return {
+    //           id: sectionId,
+    //           sectionName: section.sectionName,
+    //         };
+    //       });
+    //     } else {
+    //       fetchedSections = test.sections.map((section, idx) => {
+    //         const sectionId = section._id;
+    //         initialData[sectionId] = {
+    //           subjectSelections: section.subject || [],
+    //           classSelections: [""],
+    //           questionType: section.questionType || "MCQ",
+    //           positiveMarking: section.correctAnswerMarks || "",
+    //           negativeMarking: section.negativeMarks || "",
+    //           searchText: "",
+    //           selectionType: selectionType,
+    //           questionBankQuestionId: section.questionBankQuestionId || [],
+    //           chapter: section.chapter || [],
+    //           topic: section.topic || [],
+    //         };
+    //         return {
+    //           id: sectionId,
+    //           sectionName: section.sectionName,
+    //         };
+    //       });
+    //     }
+
+    //     setAllSections(fetchedSections);
+
+    //     const sessionData = JSON.parse(
+    //       sessionStorage.getItem("sectionMarkingData") || "{}"
+    //     );
+    //     const mergedData = { ...initialData, ...sessionData };
+
+    //     setSectionData(mergedData);
+    //     sessionStorage.setItem(
+    //       "sectionMarkingData",
+    //       JSON.stringify(mergedData)
+    //     );
+
+    //     if (fetchedSections.length > 0) {
+    //       setActiveSectionId(fetchedSections[0].id);
+    //     }
+    //   } catch (error) {
+    //     console.error("Failed to fetch test:", error);
+    //   }
+    // };
     const fetchTestDataById = async () => {
       try {
         const response = await testServices.getTestById(id);
         const test = response?.data;
-        console.log("the test check ", test.testPattern);
+        if (!test) return;
 
-        // Check for matching test name in your predefined JSON
-        const matchedPattern = testPatterns.find(
-          (pattern) =>
-            pattern.exam.toLowerCase().trim() ===
-            test.testPattern.toLowerCase().trim()
-        );
+        const initialData = {};
+        const fetchedSections = test.sections.map((section, idx) => {
+          const sectionId = section._id;
 
-        const sessionSectionNames = JSON.parse(
-          sessionStorage.getItem("customSectionNames") || "{}"
-        );
+          initialData[sectionId] = {
+            subjectSelections: section.subject?.map((s) => s) || [],
+            classSelections: [test.class || ""],
+            questionType: section.questionType || "SCQ",
+            positiveMarking: section.marksPerQuestion || "",
+            negativeMarking: section.negativeMarksPerWrongAnswer || "",
+            searchText: "",
+            selectionType: section.selectionType || "Manual",
+            questionBankQuestionId: section.questionBankQuestionId || [],
+            chapter: section.chapter || [],
+            topic: section.topic || [],
+          };
 
-        let fetchedSections = [];
-        let initialData = {};
-
-        if (test.sections.length === 0 && matchedPattern) {
-          // Use predefined JSON pattern
-          fetchedSections = matchedPattern.sections.map((section, idx) => {
-            {
-              console.log("the sections", section);
-            }
-            const sectionId = `section-${idx}-${Date.now()}`;
-            initialData[sectionId] = {
-              subjectSelections: section.subjects.map((s) =>
-                s.split("(")[0].trim()
-              ), // Clean subject names
-              classSelections: [""],
-              questionType: section.questionType || "Tmm",
-              positiveMarking: section.correctAnswerMarks || "",
-              negativeMarking: section.negativeMarks || "",
-              searchText: "",
-              selectionType: selectionType,
-              questionBankQuestionId: [],
-              chapter: [],
-              topic: [],
-            };
-            return {
-              id: sectionId,
-              sectionName: section.sectionName,
-            };
-          });
-        } else {
-          fetchedSections = test.sections.map((section, idx) => {
-            const sectionId = section._id;
-            initialData[sectionId] = {
-              subjectSelections: section.subject || [],
-              classSelections: [""],
-              questionType: section.questionType || "MCQ",
-              positiveMarking: section.correctAnswerMarks || "",
-              negativeMarking: section.negativeMarks || "",
-              searchText: "",
-              selectionType: selectionType,
-              questionBankQuestionId: section.questionBankQuestionId || [],
-              chapter: section.chapter || [],
-              topic: section.topic || [],
-            };
-            return {
-              id: sectionId,
-              sectionName: section.sectionName,
-            };
-          });
-        }
+          return {
+            id: sectionId,
+            sectionName: section.sectionName || `Section ${idx + 1}`,
+          };
+        });
 
         setAllSections(fetchedSections);
 
@@ -335,9 +397,9 @@ const TestSelection = () => {
     const validClasses = ["Class 10", "Class 11", "Class 12"];
 
     if (validClasses.includes(savedClass)) {
-      setSelectedClass(savedClass); // ✅ use correct casing
+      setSelectedClass(savedClass);
     } else {
-      setSelectedClass(""); // fallback
+      setSelectedClass("");
     }
   }, []);
 
@@ -379,6 +441,7 @@ const TestSelection = () => {
   // };
 
   const handleAddSubject = (value) => {
+    // Find the subject object from the fetched subjects list
     const selectedSubjectObj = subjects.find(
       (sub) => sub.subjectName === value
     );
@@ -386,20 +449,22 @@ const TestSelection = () => {
 
     const updated = { ...sectionData };
 
+    // Check if the subject is already in the selections
     if (
       !updated[activeSectionId].subjectSelections.some(
         (s) => s.subjectName === value
       )
     ) {
+      // Add the selected subject to the subjectSelections array
       updated[activeSectionId].subjectSelections.push(selectedSubjectObj);
       setSectionData(updated);
       sessionStorage.setItem("sectionMarkingData", JSON.stringify(updated));
     }
 
-    // ✅ Set this subject as active tab
-    setSelectedSubject(value); // 👈 This line makes the new subject active
+    // Update the selectedSubject to the chosen value (this ensures it's Math or the correct subject)
+    setSelectedSubject(value);
 
-    setAddNew(false);
+    setAddNew(false); // Close the "add new subject" input
   };
 
   const selectedChapters = chapters[selectedSubject] || [];
@@ -456,47 +521,52 @@ const TestSelection = () => {
 
   const handleNextClick = async () => {
     try {
-      const sectionData = JSON.parse(sessionStorage.getItem("sectionMarkingData"));
+      const sectionData = JSON.parse(
+        sessionStorage.getItem("sectionMarkingData")
+      );
       const selectedClass = sessionStorage.getItem("selectedClass");
       const currentSection = sectionData[activeSectionId];
-  
-      // Format topic data
+
       const topics = currentSection.topic.map((topic) => ({
         topicName: topic.topicName || topic,
         numberOfQuestions: topic.numberOfQuestions || 0,
-        chapterId: topic.chapterId || topic.chapter?._id || "", // fallback
+        chapterId: topic.chapterId || topic.chapter?._id || "",
       }));
-  
-      // AutoPick API call if Auto is selected
+
       if (selectionType === "Auto") {
         const autoPickResponse = await testServices.AutoPickQuestions(id, {
           sectionId: activeSectionId,
           topics: topics,
-          totalQuestions: topics.reduce((sum, t) => sum + (t.numberOfQuestions || 0), 0),
+          totalQuestions: topics.reduce(
+            (sum, t) => sum + (t.numberOfQuestions || 0),
+            0
+          ),
         });
-  
+
         if (!autoPickResponse?.success) {
           alert("Auto pick failed.");
           return;
         }
-  
+
         const autoPicked = autoPickResponse.data;
-  
-        const existing = JSON.parse(sessionStorage.getItem("AutoPickedQuestions") || "{}");
+
+        const existing = JSON.parse(
+          sessionStorage.getItem("AutoPickedQuestions") || "{}"
+        );
         const updated = { ...existing };
-  
+
         if (!updated[activeSectionId]) updated[activeSectionId] = {};
-  
+
         Object.entries(autoPicked).forEach(([topicName, questionMap]) => {
           updated[activeSectionId][topicName] = {
             ...(updated[activeSectionId][topicName] || {}),
             ...questionMap,
           };
         });
-  
+
         sessionStorage.setItem("AutoPickedQuestions", JSON.stringify(updated));
       }
-  
+
       // Save the section data via AddSectionDetails
       const requestData = {
         sectionId: activeSectionId,
@@ -511,19 +581,20 @@ const TestSelection = () => {
         })),
         topics,
       };
-  
+
       const response = await testServices.AddSectionDetails(id, requestData);
-  
-        alert("Section details saved successfully!");
-        navigate(`/questionPage/${id}`);
-  
+
+      alert("Section details saved successfully!");
+      navigate(`/questionPage/${id}`);
     } catch (error) {
       console.error("Error in handleNextClick:", error);
       alert("An error occurred.");
     }
   };
+  useEffect(() => {
+    console.log("Selected Subject: ", selectedSubject);
+  }, [selectedSubject]); // This will log only when the selectedSubject changes
   
-
   return (
     <>
       <TestHeader
@@ -599,16 +670,22 @@ const TestSelection = () => {
           pb: 2,
         }}
       >
+    
         {currentSection?.subjectSelections?.map((subject, index) => (
-         <Button
-         key={index}
-         variant="contained"
-         sx={{
-           backgroundColor: subject.subjectName === selectedSubject ? "#1976d2" : "white",
-           border:subject.subjectName === selectedSubject ?"" : "1px solid black",
-           fontWeight: "bold",
-           color: subject.subjectName === selectedSubject ? "white" : "black",
-         }}
+          <Button
+            key={index}
+            variant="contained"
+            sx={{
+              backgroundColor:
+                subject.subjectName === selectedSubject ? "#1976d2" : "white",
+              border:
+                subject.subjectName === selectedSubject
+                  ? ""
+                  : "1px solid black",
+              fontWeight: "bold",
+              color:
+                subject.subjectName === selectedSubject ? "white" : "black",
+            }}
             onClick={async () => {
               setSelectedSubject(subject.subjectName);
 
@@ -634,46 +711,46 @@ const TestSelection = () => {
               </IconButton>
             }
           >
+                {console.log("the checling  bro", subject.subjectName)}
             {subject.subjectName}
           </Button>
         ))}
 
-{currentSection?.subjectSelections?.length === 0 || addNew ? (
-  <TextField
-    select
-    label="Add Subject"
-    onChange={(e) => handleAddSubject(e.target.value)}
-    size="small"
-    sx={{ minWidth: 160 }}
-  >
-    {subjects?.map((sub) => (
-      <MenuItem key={sub._id} value={sub.subjectName}>
-        {sub.subjectName}
-      </MenuItem>
-    ))}
-  </TextField>
-) : (
-  <IconButton
-    onClick={() => setAddNew(true)}
-    sx={{
-      border: "1px solid #ccc",
-      ml: 1,
-      height: "36px",
-      width: "36px",
-      borderRadius: "4px",
-      alignSelf: "center",
-      backgroundColor: "green",
-      mt: "2px",
-      "&:hover": {
-        backgroundColor: "green",
-        color: "white",
-      },
-    }}
-  >
-    <AddIcon fontSize="small" style={{ color: "white" }} />
-  </IconButton>
-)}
-
+        {currentSection?.subjectSelections?.length === 0 || addNew ? (
+          <TextField
+            select
+            label="Add Subject"
+            onChange={(e) => handleAddSubject(e.target.value)}
+            size="small"
+            sx={{ minWidth: 160 }}
+          >
+            {subjects?.map((sub) => (
+              <MenuItem key={sub._id} value={sub.subjectName}>
+                {sub.subjectName}
+              </MenuItem>
+            ))}
+          </TextField>
+        ) : (
+          <IconButton
+            onClick={() => setAddNew(true)}
+            sx={{
+              border: "1px solid #ccc",
+              ml: 1,
+              height: "36px",
+              width: "36px",
+              borderRadius: "4px",
+              alignSelf: "center",
+              backgroundColor: "green",
+              mt: "2px",
+              "&:hover": {
+                backgroundColor: "green",
+                color: "white",
+              },
+            }}
+          >
+            <AddIcon fontSize="small" style={{ color: "white" }} />
+          </IconButton>
+        )}
       </Box>
 
       {/* SEARCH and SELECTION TYPE SECTION */}

@@ -6,33 +6,18 @@ const QuestionDistributionSidebar = ({
   onSelectTopic,
   pickedQuestions,
   handleSubmit,
+  subject
 }) => {
   const { id } = useParams();
   const [sections, setSections] = useState([]);
-  //   const [pickedQuestions, setPickedQuestions] = useState({});
-  console.log("the final", pickedQuestions);
+
   useEffect(() => {
     fetchTestDataById(id);
   }, [id]);
 
-  // useEffect(() => {
-  //   const handleStorageChange = () => {
-  //     const saved = localStorage.getItem("pickedQuestions");
-  //     if (saved) {
-  //       setPickedQuestions(JSON.parse(saved));
-  //     }
-  //   };
-
-  //   window.addEventListener("storage", handleStorageChange);
-  //   return () => {
-  //     window.removeEventListener("storage", handleStorageChange);
-  //   };
-  // }, []);
-
   const fetchTestDataById = async (testId) => {
     try {
       const response = await testServices.getTestById(testId);
-
       if (response?.success && response?.data?.sections) {
         setSections(response.data.sections);
       }
@@ -43,19 +28,19 @@ const QuestionDistributionSidebar = ({
 
   return (
     <div className="w-1/4 h-screen bg-white p-4 rounded-lg shadow-md flex flex-col">
-      <h3
-        className="font-bold text-gray-800 mb-4"
-        style={{ fontSize: "1.2rem" }}
-      >
+      <h3 className="font-bold text-gray-800 mb-4" style={{ fontSize: "1.2rem" }}>
         Question Distribution
       </h3>
 
+      {/* Subject Display */}
+
+
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto pr-2">
+ 
         {sections.map((section) => (
+          
           <div key={section._id} className="mb-4">
-            <p className="text-md font-semibold text-gray-700"></p>
-
             {section.chapter.length > 0 ? (
               section.chapter.map((chapter) => {
                 const relatedTopics =
@@ -67,25 +52,20 @@ const QuestionDistributionSidebar = ({
 
                 return (
                   <div key={chapter._id} className="ml-2 mt-2">
+                    
                     <p className="text-sm font-semibold text-gray-600">
                       {chapter.chapterName}
                     </p>
                     {relatedTopics.length > 0 ? (
                       relatedTopics.map((topic) => {
                         const topicName = topic.topicName.trim();
-
                         const sectionId = section._id;
 
-                        // const pickedTopicMap = Object.keys(
-                        //   pickedQuestions?.[sectionId] || {}
-                        // ).find((key) => key.trim() === topicName.trim());
                         const pickedTopicMap = Object.keys(pickedQuestions?.[sectionId] || {}).find(
                           (key) => key.trim().toLowerCase() === topicName.trim().toLowerCase()
                         );
                         const pickedCount = pickedTopicMap
-                          ? Object.keys(
-                              pickedQuestions[sectionId][pickedTopicMap]
-                            ).length
+                          ? Object.keys(pickedQuestions[sectionId][pickedTopicMap]).length
                           : 0;
 
                         return (

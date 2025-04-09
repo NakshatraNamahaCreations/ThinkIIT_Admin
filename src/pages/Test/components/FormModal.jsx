@@ -94,37 +94,49 @@ const FormModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async () => {
     try {
-      let payload = {
-        testName: formData.testName,
-        testPattern: formData.testPattern,
-        selectionType: formData.selectionType,
-        sections: formData.sections,
-      };
-
-      if (formData.selectionType === "SELECTION") {
-        const pattern = testPatterns.find((p) =>
-          p.exam.toLowerCase().includes(formData.testPattern.toLowerCase())
-        );
-
-        payload.sections = pattern ? pattern.sections : [];
-      } else if (formData.selectionType === "QID") {
-        // Convert sections to match schema format
-        payload.sections = formData.sections.map((sec) => ({
-          questionBankQuestionId: sec.questionBankQuestionId,
-          questionSelection: "QID",
-          sectionStatus: "incomplete",
-        }));
+      // Get the pattern based on selected testPattern
+      const matchedPattern = testPatterns.find(
+        (p) =>
+          p.exam.trim().toLowerCase() === formData.testPattern.trim().toLowerCase()
+      );
+      console.log("the checkffdfdsfsdf");
+  
+      if (!matchedPattern) {
+        toast.error("Pattern not found for selected test!");
+        return;
       }
 
-      const response = await testServices.createAssignment(formData);
-      
-      toast.success("Test created successfully!");
+      // Transform the sections to match schema
+      const transformedSections = matchedPattern.sections.map((section) => ({
+        sectionName: section.sectionName,
+        subject: section.subjects.map((s) => ({ subjectName: s })),
+        questionType: section.questionType,
+        numberOfQuestions: section.questions,
+        marksPerQuestion: section.correctAnswerMarks,
+        negativeMarksPerWrongAnswer: section.negativeMarks,
+        sectionStatus: "incomplete",
+        chapter: [],
+        topic: [],
+        questionBankQuestionId: [],
+      }));
+  
+      const payload = {
+        testName: formData.testName,
+        class: formData.className,
+        testPattern: formData.testPattern,
+        selectionType: "SELECTION",
+        sections: transformedSections,
+      };
+  
+      const response = await testServices.createAssignment(payload);
+  
+      localStorage.setItem("sectionCount", transformedSections.length);
       navigate(`/test-selection/${response.data._id}`);
-      onClose();
     } catch (error) {
-      console.error("Error creating test:", error);
-      toast.error("Error creating test.");
+      toast.error("An error occurred while submitting the assignment.");
     }
+  
+    onClose();
   };
 
   if (!isOpen) return null;
